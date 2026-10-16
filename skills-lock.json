@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "antfu-design": {
+      "source": "antfu/design",
+      "sourceType": "github",
+      "skillPath": "skills/antfu-design/SKILL.md",
+      "computedHash": "9ff0e04d4404ad341108a3c54bc6c793b88a427e4f945967d567e8ca62db31fe"
+    }
+  }
+}
