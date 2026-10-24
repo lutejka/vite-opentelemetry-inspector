@@ -71,7 +71,7 @@
     }
   },
   "dependencies": {
-    "@vitejs/devtools-kit": "^0.7.6"
+    "@vitejs/devtools-kit": "^0.8.0"
   },
   "devDependencies": {
     "@antfu/design": "^0.6.0",
