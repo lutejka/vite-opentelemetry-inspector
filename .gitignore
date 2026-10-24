@@ -1,5 +1,8 @@
 # Logs
-logs
+# Root-level log dumps only — an unqualified `logs` would also ignore
+# `client/features/logs/`, which Tailwind skips when scanning sources
+# (it respects .gitignore), silently dropping those styles from the build.
+/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -147,3 +150,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Superpowers scratch (ledgers, workspaces)
+.superpowers/

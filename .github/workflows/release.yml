@@ -3,12 +3,12 @@ name: release
 on:
   push:
     # `release/v*` picks up hand edits to an open release PR (uppt template).
-    branches: [main, 'release/v*']
+    branches: [main, "release/v*"]
     # Docs-only changes must NOT trigger a release. `client/**`
     # intentionally stays un-ignored: the client is bundled into
     # the published package via `dist/devtools-client`.
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   pull_request:
     types: [closed]
     branches: [main]
@@ -16,13 +16,13 @@ on:
   workflow_dispatch:
     inputs:
       prerelease:
-        description: 'Cut a prerelease instead of a normal release, e.g. `beta`, `rc`, or `0`'
+        description: "Cut a prerelease instead of a normal release, e.g. `beta`, `rc`, or `0`"
         required: false
-        default: ''
+        default: ""
       npm-tag:
-        description: 'npm dist-tag to publish to. Set by uppt/release for maintenance lines; leave blank otherwise'
+        description: "npm dist-tag to publish to. Set by uppt/release for maintenance lines; leave blank otherwise"
         required: false
-        default: ''
+        default: ""
 
 permissions: {}
 

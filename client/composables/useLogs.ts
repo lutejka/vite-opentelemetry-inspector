@@ -1,4 +1,4 @@
-import { useOtelStore } from '../otel.ts'
+import { useOtelStore } from '~/app/otel'
 
 export function useLogs() {
   const { logs, clearAllLogs } = useOtelStore()

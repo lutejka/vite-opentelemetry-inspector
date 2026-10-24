@@ -1,0 +1,44 @@
+{
+  "typescript": {
+    "semiColons": "asi",
+    "quoteStyle": "preferSingle",
+    "indentWidth": 2,
+    "lineWidth": 120,
+    "useTabs": false
+  },
+  "json": {
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "markdown": {
+    "lineWidth": 120
+  },
+  "malva": {
+    "indentWidth": 2,
+    "printWidth": 120
+  },
+  "markup": {
+    "indentWidth": 2,
+    "printWidth": 120
+  },
+  "yaml": {
+    "indentWidth": 2,
+    "printWidth": 120
+  },
+  "excludes": [
+    "**/node_modules",
+    "**/dist",
+    "**/*-lock.json",
+    "pnpm-lock.yaml",
+    "**/CHANGELOG.md",
+    ".superpowers/**"
+  ],
+  "plugins": [
+    "npm:@dprint/typescript@0.96.1",
+    "npm:@dprint/json@0.25.2",
+    "npm:@dprint/markdown@0.28.0",
+    "npm:dprint-plugin-malva@0.16.0",
+    "npm:dprint-plugin-markup@0.27.6",
+    "npm:dprint-plugin-yaml@0.6.0"
+  ]
+}

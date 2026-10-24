@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@plugin "@iconify/tailwind4";
+@import "./theme.css";
+@import "./utilities.css";
+@import "./base.css";
+@import "./scrollbar.css";
+@import "./splitpanes.css";
+@import "./vue-afloat.css";
+
+/* Badge palette names are assembled at runtime (`badge-color-${color}` in
+ * Badge.vue), so they never appear as literal class candidates in the source.
+ * Enumerate them here so Tailwind still emits the utilities. */
+@source inline("badge-color-{red,amber,orange,yellow,green,emerald,blue,cyan,violet,purple,pink,gray}");

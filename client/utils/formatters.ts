@@ -3,11 +3,9 @@ import { SpanKind } from '@opentelemetry/api'
 export function formatDuration(ms: number): string {
   if (ms < 1) {
     return `${(ms * 1000).toFixed(2)}µs`
-  }
-  else if (ms < 1000) {
+  } else if (ms < 1000) {
     return `${ms.toFixed(2)}ms`
-  }
-  else {
+  } else {
     return `${(ms / 1000).toFixed(2)}s`
   }
 }
@@ -17,11 +15,9 @@ export function formatDurationCompact(ms: number): string {
   if (ms < 1) {
     const val = ms * 1000
     return `${Number.parseFloat(val.toFixed(1))}µs`
-  }
-  else if (ms < 1000) {
+  } else if (ms < 1000) {
     return `${Number.parseFloat(ms.toFixed(1))}ms`
-  }
-  else {
+  } else {
     return `${Number.parseFloat((ms / 1000).toFixed(1))}s`
   }
 }

@@ -1,6 +1,12 @@
 # vite-opentelemetry-inspector
 
-OpenTelemetry traces & logs inspector as a standalone [Vite](https://vite.dev) plugin built on [devframe](https://devfra.me). Extracted from the devtools UI of [`nuxt-otel`](https://github.com/lutejka/nuxt-otel), following the [`fontless` devframe PR](https://github.com/unjs/fontaine/pull/877/changes) (`unjs/fontaine#877`).
+OpenTelemetry traces & logs inspector as a standalone [Vite](https://vite.dev) plugin built on [devframe](https://devfra.me). Extracted from the devtools UI of [`nuxt-otel`](https://github.com/lutejka/nuxt-otel).
+
+## Screenshots
+
+| Traces                                                                                                                                                                                           | Logs                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="./docs/images/trace-dark.png"><img alt="Trace waterfall timeline with span details" src="./docs/images/trace-light.png"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="./docs/images/logs-dark.png"><img alt="Logs view with expandable entries and severity badges" src="./docs/images/logs-light.png"></picture> |
 
 ## Install
 
@@ -11,8 +17,8 @@ pnpm i vite-opentelemetry-inspector
 ## Usage
 
 ```ts
-import { viteOpentelemetryInspector } from 'vite-opentelemetry-inspector'
 import { defineConfig } from 'vite'
+import { viteOpentelemetryInspector } from 'vite-opentelemetry-inspector'
 
 export default defineConfig({
   plugins: [viteOpentelemetryInspector()],
@@ -56,6 +62,12 @@ import { isInternalRoute } from 'vite-opentelemetry-inspector'
 ## MCP
 
 The devframe exposes agent tools (`get-traces`, `get-trace`, `get-spans`, `get-logs`) over the devframe MCP adapter — the equivalent of `nuxt-otel`'s `/__nuxt-otel-mcp` tools.
+
+MCP support is optional: it requires [`@devframes/agentic`](https://www.npmjs.com/package/@devframes/agentic), which is not installed automatically. Add it to your project:
+
+```sh
+pnpm i -D @devframes/agentic
+```
 
 ## Release
 

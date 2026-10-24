@@ -1,10 +1,10 @@
-import type { Plugin } from 'vite'
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
-import UnoCSS from '@unocss/vite'
+import { fileURLToPath } from 'node:url'
+import Unfonts from 'unplugin-fonts/vite'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
-import { createFixtures } from './fixtures.ts'
+import { createFixtures } from './app/fixtures.ts'
 
 const BASE = '/__opentelemetry/'
 const clientDir = fileURLToPath(new URL('.', import.meta.url))
@@ -35,8 +35,7 @@ function devBridge(): Plugin {
       server.middlewares.use((req, res, next) => {
         if (req.url?.startsWith(`${BASE}__`)) {
           instance.nodeMiddleware(req, res, next)
-        }
-        else {
+        } else {
           next()
         }
       })
@@ -47,15 +46,21 @@ function devBridge(): Plugin {
 export default defineConfig(({ command }) => ({
   base: command === 'serve' ? BASE : './',
   root: clientDir,
-  plugins: [vue(), UnoCSS({ configFile: fileURLToPath(new URL('./uno.config.ts', import.meta.url)) }), devBridge()],
+  plugins: [
+    vue(),
+    tailwindcss(),
+    Unfonts({
+      fontsource: {
+        families: [{ name: 'JetBrains Mono Variable', variable: true, fallback: { category: 'monospace' } }],
+      },
+    }),
+    devBridge(),
+  ],
   resolve: {
     alias: [
       { find: '~shared', replacement: fileURLToPath(new URL('../src', import.meta.url)) },
       { find: '~/', replacement: `${clientDir}/` },
     ],
-  },
-  define: {
-    __OTEL_PRIMARY_COLOR__: JSON.stringify(process.env.OTEL_DEVTOOLS_PRIMARY_COLOR ?? ''),
   },
   build: {
     outDir: fileURLToPath(new URL('../dist/devtools-client', import.meta.url)),

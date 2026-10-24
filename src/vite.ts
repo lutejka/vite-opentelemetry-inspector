@@ -10,10 +10,12 @@ export interface ViteOpentelemetryInspectorOptions {
    * DevTools panel. Pass `false` to skip mounting the panel (ingest endpoint still works).
    * Extra fields are forwarded to `createOpentelemetryDevframe`.
    */
-  devtools?: false | (OpentelemetryDevframeOptions & {
-    /** OTLP ingest path. Default `/__opentelemetry-ingest`. */
-    ingestPath?: string
-  })
+  devtools?:
+    | false
+    | (OpentelemetryDevframeOptions & {
+      /** OTLP ingest path. Default `/__opentelemetry-ingest`. */
+      ingestPath?: string
+    })
   /** OTLP HTTP ingest endpoint. `false` disables it. Default `{ path: '/__opentelemetry-ingest' }`. */
   ingest?: false | {
     path?: string
@@ -36,8 +38,7 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<unknown
       }
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8')))
-      }
-      catch (error) {
+      } catch (error) {
         reject(error)
       }
     })
@@ -69,8 +70,8 @@ export function viteOpentelemetryInspector(_options?: ViteOpentelemetryInspector
     : (typeof options.devtools === 'object' && options.devtools.ingestPath) || INGEST_PATH
   const ingestEnabled = options.ingest !== false
   const devtoolsEnabled = options.devtools !== false
-  const devframeOptions: OpentelemetryDevframeOptions
-    = (typeof options.devtools === 'object' ? options.devtools : {}) as OpentelemetryDevframeOptions
+  const devframeOptions: OpentelemetryDevframeOptions =
+    (typeof options.devtools === 'object' ? options.devtools : {}) as OpentelemetryDevframeOptions
 
   // Calls made before Vite DevTools mounts the devframe, keyed to drop repeats.
   const devframeCalls = new Map<string, (devframe: OpentelemetryDevframe) => void>()
@@ -78,8 +79,7 @@ export function viteOpentelemetryInspector(_options?: ViteOpentelemetryInspector
   function toDevframe(key: string, call: (devframe: OpentelemetryDevframe) => void) {
     if (devframe) {
       call(devframe)
-    }
-    else {
+    } else {
       devframeCalls.set(key, call)
     }
   }
@@ -113,8 +113,7 @@ export function viteOpentelemetryInspector(_options?: ViteOpentelemetryInspector
           const body = await readJsonBody(req)
           if (devframe) {
             devframe.ingest(body)
-          }
-          else {
+          } else {
             // Buffer until the devframe is installed (same pattern as expose* in fontless).
             const snapshot = JSON.parse(JSON.stringify(body ?? null))
             toDevframe(`ingest:${Date.now()}:${Math.random()}`, d => d.ingest(snapshot))
@@ -122,8 +121,7 @@ export function viteOpentelemetryInspector(_options?: ViteOpentelemetryInspector
           res.statusCode = 200
           res.setHeader('Content-Type', 'application/json')
           res.end('{}')
-        }
-        catch (error) {
+        } catch (error) {
           res.statusCode = 400
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify({ error: (error as Error)?.message || 'Invalid JSON body' }))

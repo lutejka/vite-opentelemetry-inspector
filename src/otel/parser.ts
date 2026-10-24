@@ -1,5 +1,5 @@
-import { parseAttributes, nanoToMs, getAttributeValue } from './helper.ts'
 import { randomUUID } from 'node:crypto'
+import { getAttributeValue, nanoToMs, parseAttributes } from './helper.ts'
 
 export interface IKeyValue {
   key: string
@@ -220,8 +220,7 @@ export function parseOTLPTrace(otlpData: IExportTraceServiceRequest): TraceResul
             status_code: statusCode,
             status_message: statusMessage,
           })
-        }
-        else {
+        } else {
           // Update trace timing if this span extends it
           const trace = traces.get(traceId)!
           if (startTime < trace.start_time) trace.start_time = startTime

@@ -1,5 +1,5 @@
-import { parseOTLPLog, parseOTLPTrace } from './parser.ts'
 import type { createOtelStore } from '../store.ts'
+import { parseOTLPLog, parseOTLPTrace } from './parser.ts'
 
 /** Minimal OTLP JSON ingest: accepts `/v1/traces` and `/v1/logs` payloads (or a merged body). */
 export function ingestOtlpBody(store: ReturnType<typeof createOtelStore>, body: any): void {
