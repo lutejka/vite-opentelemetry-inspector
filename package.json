@@ -23,7 +23,7 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "packageManager": "pnpm@11.14.0",
+  "packageManager": "pnpm@11.15.0",
   "exports": {
     ".": "./dist/index.mjs",
     "./devtools": "./dist/devtools.mjs"
@@ -88,7 +88,7 @@
     "@vueuse/core": "^15.0.0",
     "colorjs.io": "^0.7.1",
     "devframe": "1.2.3",
-    "eslint": "^9.0.0",
+    "eslint": "^10.0.0",
     "reka-ui": "^2.11.0",
     "splitpanes": "^4.1.2",
     "typescript": "~5.9.0",
@@ -98,6 +98,6 @@
     "vitest": "^3.0.0",
     "vue": "^3.5.0",
     "vue-afloat": "^0.2.0",
-    "vue-tsc": "^2.2.0"
+    "vue-tsc": "^3.0.0"
   }
 }
