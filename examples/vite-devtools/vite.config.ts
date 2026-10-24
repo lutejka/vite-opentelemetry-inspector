@@ -1,6 +1,6 @@
-import { viteOpentelemetryInspector } from 'vite-opentelemetry-inspector'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
+import { viteOpentelemetryInspector } from 'vite-opentelemetry-inspector'
 
 export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),

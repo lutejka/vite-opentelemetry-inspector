@@ -18,10 +18,10 @@ const STORAGE_KEY = 'devframes-color-scheme'
 function readPreference(): ColorSchemePreference {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark' || stored === 'auto')
+    if (stored === 'light' || stored === 'dark' || stored === 'auto') {
       return stored
-  }
-  catch {
+    }
+  } catch {
     // Storage unavailable (e.g. sandboxed frame) — fall through to Auto.
   }
   return 'auto'
@@ -30,12 +30,10 @@ function readPreference(): ColorSchemePreference {
 const preference = ref<ColorSchemePreference>(readPreference())
 const osDark = ref(
   typeof window.matchMedia === 'function'
-  && window.matchMedia('(prefers-color-scheme: dark)').matches,
+    && window.matchMedia('(prefers-color-scheme: dark)').matches,
 )
 
-export const isColorModeDark = computed(() =>
-  preference.value === 'auto' ? osDark.value : preference.value === 'dark',
-)
+const isColorModeDark = computed(() => preference.value === 'auto' ? osDark.value : preference.value === 'dark')
 
 function applyToDocument(dark: boolean) {
   const root = document.documentElement
@@ -47,13 +45,15 @@ function applyToDocument(dark: boolean) {
 let listenersAttached = false
 
 function attachListeners() {
-  if (listenersAttached || typeof window === 'undefined')
+  if (listenersAttached || typeof window === 'undefined') {
     return
+  }
   listenersAttached = true
 
   window.addEventListener('storage', (event) => {
-    if (event.key !== STORAGE_KEY)
+    if (event.key !== STORAGE_KEY) {
       return
+    }
     preference.value = readPreference()
   })
 
@@ -61,10 +61,11 @@ function attachListeners() {
   const onMediaChange = (event: MediaQueryListEvent) => {
     osDark.value = event.matches
   }
-  if (typeof media?.addEventListener === 'function')
+  if (typeof media?.addEventListener === 'function') {
     media.addEventListener('change', onMediaChange)
-  else if (typeof media?.addListener === 'function')
+  } else if (typeof media?.addListener === 'function') {
     media.addListener(onMediaChange)
+  }
 }
 
 /**

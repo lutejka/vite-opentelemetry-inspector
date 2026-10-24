@@ -1,7 +1,7 @@
-import { ref } from 'vue'
 import { useEventListener, useLocalStorage } from '@vueuse/core'
+import { ref } from 'vue'
 
-export function useResizablePanel(storageKey: string, defaultWidth: number, options?: { min?: number, max?: number }) {
+export function useResizablePanel(storageKey: string, defaultWidth: number, options?: { min?: number; max?: number }) {
   const min = options?.min ?? 280
   const max = options?.max ?? 800
 

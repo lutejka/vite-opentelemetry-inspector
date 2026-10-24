@@ -13,7 +13,7 @@ export interface OtelStore {
   getTraces(): Trace[]
   getSpans(traceId?: string): Span[]
   getLogs(): Log[]
-  getTrace(traceId: string): { trace: Trace | null, spans: Span[] }
+  getTrace(traceId: string): { trace: Trace | null; spans: Span[] }
   addTraces(traces: Trace[]): void
   addSpans(spans: Span[]): void
   addLogs(logs: Log[]): void
@@ -32,8 +32,7 @@ export function createOtelStore(): OtelStore {
     for (const listener of listeners) {
       try {
         listener()
-      }
-      catch {
+      } catch {
         // ignore listener errors during dev restarts
       }
     }

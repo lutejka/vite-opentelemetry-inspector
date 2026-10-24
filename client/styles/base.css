@@ -1,0 +1,6 @@
+/* Root surface — follows the --ui-* tokens flipped in theme.css. */
+html,
+body {
+  background: var(--ui-bg);
+  color: var(--ui-fg);
+}

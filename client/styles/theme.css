@@ -1,0 +1,101 @@
+/**
+ * Design tokens + Tailwind theme mapping.
+ *
+ * Raw `--ui-*` values flip per mode: `:root` = Alucard Classic (light),
+ * `.dark` = Dracula Classic (dark). The `@theme inline` block maps them into
+ * Tailwind's color namespace so opacity modifiers (`bg-primary/40`) keep
+ * working while the underlying vars stay runtime-swappable.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+
+  --ui-fg: #1f1f1f;
+  --ui-fg-muted: #58533e;
+  --ui-fg-faint: #7c7558;
+  --ui-on-primary: #ffffff;
+  --ui-bg: #fffbeb;
+  --ui-bg-secondary: #f0edde;
+  --ui-bg-raised: #fcfaf0;
+  --ui-bg-sunken: #eae6d5;
+  --ui-hover: rgba(108, 102, 75, 0.08);
+  --ui-active: rgba(108, 102, 75, 0.16);
+  --ui-glass: rgba(255, 253, 244, 0.65);
+  --ui-line: rgba(108, 102, 75, 0.24);
+  --ui-line-muted: rgba(108, 102, 75, 0.14);
+  --ui-red: #cb3a2a;
+  --ui-orange: #a34d14;
+  --ui-yellow: #846e15;
+  --ui-green: #14710a;
+  --ui-cyan: #036a96;
+  --ui-purple: #644ac9;
+  --ui-pink: #a3144d;
+  --ui-gray: #6c664b;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --ui-fg: #f8f8f2;
+  --ui-fg-muted: #a7abbe;
+  --ui-fg-faint: #7e83a0;
+  --ui-on-primary: #21222c;
+  --ui-bg: #282a36;
+  --ui-bg-secondary: #22232e;
+  --ui-bg-raised: #343746;
+  --ui-bg-sunken: #21222c;
+  --ui-hover: rgba(248, 248, 242, 0.07);
+  --ui-active: rgba(248, 248, 242, 0.13);
+  --ui-glass: rgba(40, 42, 54, 0.55);
+  --ui-line: rgba(98, 114, 164, 0.30);
+  --ui-line-muted: rgba(98, 114, 164, 0.18);
+  --ui-red: #ff5555;
+  --ui-orange: #ffb86c;
+  --ui-yellow: #f1fa8c;
+  --ui-green: #50fa7b;
+  --ui-cyan: #8be9fd;
+  --ui-purple: #bd93f9;
+  --ui-pink: #ff79c6;
+  --ui-gray: #9298b8;
+}
+
+@theme inline {
+  /* Semantic aliases */
+  --color-primary: var(--ui-purple);
+  --color-error: var(--ui-red);
+  --color-success: var(--ui-green);
+  --color-warning: var(--ui-orange);
+  --color-info: var(--ui-cyan);
+
+  /* Dracula/Alucard palette */
+  --color-red: var(--ui-red);
+  --color-orange: var(--ui-orange);
+  --color-yellow: var(--ui-yellow);
+  --color-green: var(--ui-green);
+  --color-cyan: var(--ui-cyan);
+  --color-purple: var(--ui-purple);
+  --color-pink: var(--ui-pink);
+  --color-gray: var(--ui-gray);
+
+  /* Tailwind-palette aliases used by existing markup */
+  --color-amber: var(--ui-orange);
+  --color-emerald: var(--ui-green);
+  --color-blue: var(--ui-cyan);
+  --color-violet: var(--ui-purple);
+
+  /* `... fallback` is emitted by unplugin-fonts (fontaine metric overrides) for
+   * the pre-load paint; without it the size-adjusted fallback face is unused. */
+  --font-sans: "JetBrains Mono Variable", "JetBrains Mono fallback", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono fallback", ui-monospace, monospace;
+}
+
+@theme {
+  --text-micro: 10px;
+  --text-micro--line-height: 1.4;
+  --text-mini: 11px;
+  --text-mini--line-height: 1.45;
+  --text-compact: 12px;
+  --text-compact--line-height: 1.5;
+}

@@ -5,22 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OpenTelemetry Inspector</title>
     <script>
-      // Pre-hydration color mode: mirror the hub's `devframes-color-scheme`
-      // (Auto = follow the OS) before first paint to avoid a theme flash.
-      try {
-        var stored = window.localStorage.getItem('devframes-color-scheme')
-        var dark = stored === 'dark'
-          || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        var root = document.documentElement
-        root.classList.toggle('dark', dark)
-        root.classList.toggle('light', !dark)
-        root.style.colorScheme = dark ? 'dark' : 'light'
-      }
-      catch (e) {}
+    // Pre-hydration color mode: mirror the hub's `devframes-color-scheme`
+    // (Auto = follow the OS) before first paint to avoid a theme flash.
+    try {
+      var stored = window.localStorage.getItem('devframes-color-scheme')
+      var dark = stored === 'dark'
+        || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      var root = document.documentElement
+      root.classList.toggle('dark', dark)
+      root.classList.toggle('light', !dark)
+      root.style.colorScheme = dark ? 'dark' : 'light'
+    } catch (e) {}
     </script>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/main.ts"></script>
+    <script type="module" src="/app/main.ts"></script>
   </body>
 </html>

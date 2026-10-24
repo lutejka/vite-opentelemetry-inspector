@@ -1,9 +1,9 @@
 import type { DevframeDefinition } from 'devframe'
+import { defineDevframe, defineRpcFunction } from 'devframe'
 import type { SharedState } from 'devframe/utils/shared-state'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defineDevframe, defineRpcFunction } from 'devframe'
 import pkg from '../package.json' with { type: 'json' }
 import { ingestOtlpBody } from './otel/ingest.ts'
 import { createOtelStore } from './store.ts'
@@ -73,8 +73,7 @@ function resolveClientAssets(): string {
         if (JSON.parse(readFileSync(manifest, 'utf8')).name === packageName) {
           return join(dir, 'dist', 'devtools-client')
         }
-      }
-      catch {
+      } catch {
         // Unreadable manifest — keep ascending.
       }
     }
