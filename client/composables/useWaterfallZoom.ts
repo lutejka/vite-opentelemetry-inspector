@@ -9,25 +9,45 @@ function clampZoom(value: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value))
 }
 
-export function useWaterfallZoom(containerRef: Ref<HTMLElement | null>) {
+export interface WaterfallZoomOptions {
+  /** Visible width of the timeline column, in pixels. */
+  viewportWidth: Ref<number>
+  /** Width of the pinned name column, in pixels. */
+  columnWidth: Ref<number>
+  /** Distance between the timeline column edge and the time track, in pixels. */
+  trackInset: number
+}
+
+export function useWaterfallZoom(containerRef: Ref<HTMLElement | null>, options: WaterfallZoomOptions) {
   const zoomLevel = ref(MIN_ZOOM)
+
+  function trackWidthAt(zoom: number): number {
+    return Math.max(1, options.viewportWidth.value * zoom - options.trackInset * 2)
+  }
 
   function zoomAt(factor: number, clientX: number) {
     const container = containerRef.value
-    if (!container) return
+    const viewport = options.viewportWidth.value
+    if (!container || viewport <= 0) return
 
     const nextZoom = clampZoom(zoomLevel.value * factor)
     if (nextZoom === zoomLevel.value) return
 
     const rect = container.getBoundingClientRect()
     const pointerX = clientX - rect.left
-    const scrollRatio = (container.scrollLeft + pointerX) / container.scrollWidth
+    const trackX = pointerX - options.columnWidth.value - options.trackInset + container.scrollLeft
+    const ratio = Math.min(1, Math.max(0, trackX / trackWidthAt(zoomLevel.value)))
 
     zoomLevel.value = nextZoom
 
     nextTick(() => {
-      if (!containerRef.value) return
-      containerRef.value.scrollLeft = scrollRatio * containerRef.value.scrollWidth - pointerX
+      const element = containerRef.value
+      if (!element) return
+
+      const nextTrack = trackWidthAt(zoomLevel.value)
+      const nextContentWidth = nextTrack + options.trackInset * 2
+      const target = ratio * nextTrack - pointerX + options.columnWidth.value + options.trackInset
+      element.scrollLeft = Math.min(Math.max(0, target), Math.max(0, nextContentWidth - viewport))
     })
   }
 

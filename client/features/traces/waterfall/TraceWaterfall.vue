@@ -63,78 +63,82 @@
       </div>
     </header>
 
-    <div class="flex-1 flex overflow-hidden min-h-0">
-      <aside
-        ref="leftPanel"
-        class="overflow-auto scrollbar-none shrink-0 bg-base"
-        :style="{ width: `${nameColWidth}px` }"
-        @scroll="syncScrollFromLeft"
-      >
-        <div class="sticky top-0 z-40 bg-base border-b border-base h-8 flex items-center px-3">
+    <div class="relative flex-1 flex flex-col min-h-0">
+      <div class="shrink-0 flex h-8 bg-base border-b border-base">
+        <div class="shrink-0 flex items-center px-3" :style="{ width: `${nameColWidth}px` }">
           <span class="text-micro color-faint font-medium uppercase tracking-wide">Name</span>
           <span class="text-micro color-faint font-medium uppercase tracking-wide ml-auto">Duration</span>
         </div>
-        <div class="py-1.5 pl-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
-          <SpanRowName
-            v-for="row in flatRows"
-            :key="row.span.span_id"
-            :row="row"
-            :expanded="isExpanded(row.span.span_id)"
-            :selected="row.span.span_id === selectedSpanId"
-            :hovered="row.span.span_id === hoveredSpanId"
-            @select-span="$emit('select-span', $event)"
-            @toggle="toggleShowChildren"
-            @hover="hoveredSpanId = $event"
-            @unhover="hoveredSpanId = null"
+        <div class="shrink-0 min-w-0 overflow-hidden" :style="{ width: `${timelineViewportWidth}px` }">
+          <TraceTimeline
+            :trace-duration="traceBounds.traceDuration"
+            :content-width="Math.max(0, timelineWidth - TRACK_INSET * 2)"
+            :viewport-width="timelineViewportWidth"
+            :scroll-left="scrollLeft"
+            :inset="TRACK_INSET"
           />
         </div>
-      </aside>
+        <div class="flex-1" />
+      </div>
 
-      <div
-        class="shrink-0 w-0 cursor-col-resize -mx-px px-px border-l border-base hover:border-active transition-colors"
-        :class="{ 'border-active!': nameColDragging }"
-        @mousedown="onNameColMouseDown"
-      />
-
-      <section
-        ref="timelineContainer"
-        class="flex-1 overflow-auto bg-base cursor-grab min-w-0"
-        :class="{ 'cursor-grabbing': isPanning }"
-        @scroll="syncScrollFromRight"
-        @mousedown="onTimelineMouseDown"
-      >
-        <div class="min-h-full" :style="timelineContentStyle">
-          <div class="sticky top-0 z-nav bg-base border-b border-base h-8 pr-1.5">
-            <div class="mx-1.5 h-full">
-              <TraceTimeline :trace-duration="traceBounds.traceDuration" />
+      <div ref="scroller" class="flex-1 min-h-0 overflow-auto" @scroll.passive="onScroll">
+        <div class="min-h-full min-w-full flex" :style="{ width: `${nameColWidth + timelineWidth}px` }">
+          <div class="sticky left-0 z-30 shrink-0 bg-base border-r border-base" :style="{ width: `${nameColWidth}px` }">
+            <div class="py-1.5 pl-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
+              <SpanRowName
+                v-for="row in flatRows"
+                :key="row.span.span_id"
+                :row="row"
+                :expanded="isExpanded(row.span.span_id)"
+                :selected="row.span.span_id === selectedSpanId"
+                :hovered="row.span.span_id === hoveredSpanId"
+                @select-span="$emit('select-span', $event)"
+                @toggle="toggleShowChildren"
+                @hover="hoveredSpanId = $event"
+                @unhover="hoveredSpanId = null"
+              />
             </div>
           </div>
 
-          <div class="py-1.5 pr-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
-            <SpanRowBar
-              v-for="row in flatRows"
-              :key="row.span.span_id"
-              :row="row"
-              :selected="row.span.span_id === selectedSpanId"
-              :hovered="row.span.span_id === hoveredSpanId"
-              :hot="hotPathIds.has(row.span.span_id)"
-              :hot-path-enabled="showHotPath"
-              :trace-start="traceBounds.traceStart"
-              :trace-duration="traceBounds.traceDuration"
-              @select-span="$emit('select-span', $event)"
-              @hover="hoveredSpanId = $event"
-              @unhover="hoveredSpanId = null"
-            />
+          <div
+            class="shrink-0 cursor-grab"
+            :class="{ 'cursor-grabbing': isPanning }"
+            :style="{ width: `${timelineWidth}px` }"
+            @mousedown="onTimelineMouseDown"
+          >
+            <div class="py-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
+              <SpanRowBar
+                v-for="row in flatRows"
+                :key="row.span.span_id"
+                :row="row"
+                :selected="row.span.span_id === selectedSpanId"
+                :hovered="row.span.span_id === hoveredSpanId"
+                :hot="hotPathIds.has(row.span.span_id)"
+                :hot-path-enabled="showHotPath"
+                :trace-start="traceBounds.traceStart"
+                :trace-duration="traceBounds.traceDuration"
+                @select-span="$emit('select-span', $event)"
+                @hover="hoveredSpanId = $event"
+                @unhover="hoveredSpanId = null"
+              />
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+
+      <div
+        class="absolute top-0 bottom-0 z-40 w-0 cursor-col-resize -mx-px px-px border-l border-base hover:border-active transition-colors"
+        :class="{ 'border-active!': nameColDragging }"
+        :style="{ left: `${nameColWidth}px` }"
+        @mousedown="onNameColMouseDown"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { SpanStatusCode } from '@opentelemetry/api'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useResizablePanel } from '~/composables/useResizablePanel'
 import { useWaterfallPan } from '~/composables/useWaterfallPan'
 import { useWaterfallZoom } from '~/composables/useWaterfallZoom'
@@ -224,43 +228,51 @@ const flatRows = computed(() => flattenVisibleTree(spanTree.value, isExpanded))
 
 const hoveredSpanId = ref<string | null>(null)
 
-const leftPanel = ref<HTMLElement | null>(null)
-const timelineContainer = ref<HTMLElement | null>(null)
+/** Must match the horizontal inset of the span bars (mx-1.5 in SpanRowBar). */
+const TRACK_INSET = 6
 
-const { zoomLevel, resetZoom, isZoomed } = useWaterfallZoom(timelineContainer)
-const { isPanning, onMouseDown: onTimelineMouseDown } = useWaterfallPan(timelineContainer)
+const scroller = ref<HTMLElement | null>(null)
+const scrollViewportWidth = ref(0)
+const scrollLeft = ref(0)
 
-const timelineContentStyle = computed(() => ({
-  width: `${zoomLevel.value * 100}%`,
-  minWidth: '100%',
-}))
+const timelineViewportWidth = computed(() => Math.max(0, Math.floor(scrollViewportWidth.value - nameColWidth.value)))
 
-let syncingScroll = false
+const { zoomLevel, resetZoom, isZoomed } = useWaterfallZoom(scroller, {
+  viewportWidth: timelineViewportWidth,
+  columnWidth: nameColWidth,
+  trackInset: TRACK_INSET,
+})
 
-function syncScrollFromLeft(event: Event) {
-  if (syncingScroll) return
-  syncingScroll = true
-  const source = event.target as HTMLElement
-  if (timelineContainer.value) {
-    timelineContainer.value.scrollTop = source.scrollTop
-  }
-  syncingScroll = false
+const timelineWidth = computed(() =>
+  Math.max(timelineViewportWidth.value, Math.floor(timelineViewportWidth.value * zoomLevel.value))
+)
+
+const { isPanning, onMouseDown: onTimelineMouseDown } = useWaterfallPan(scroller)
+
+function onScroll(event: Event) {
+  scrollLeft.value = (event.target as HTMLElement).scrollLeft
 }
 
-function syncScrollFromRight(event: Event) {
-  if (syncingScroll) return
-  syncingScroll = true
-  const source = event.target as HTMLElement
-  if (leftPanel.value) {
-    leftPanel.value.scrollTop = source.scrollTop
-  }
-  syncingScroll = false
-}
+let resizeObserver: ResizeObserver | undefined
+
+onMounted(() => {
+  const element = scroller.value
+  if (!element) return
+
+  scrollViewportWidth.value = element.clientWidth
+  resizeObserver = new ResizeObserver(() => {
+    scrollViewportWidth.value = element.clientWidth
+  })
+  resizeObserver.observe(element)
+})
+
+onUnmounted(() => resizeObserver?.disconnect())
 
 watch(
   () => props.trace.trace_id,
   () => {
     resetZoom()
+    scrollLeft.value = 0
     expandedState.clear()
     hoveredSpanId.value = null
     showHotPath.value = false
