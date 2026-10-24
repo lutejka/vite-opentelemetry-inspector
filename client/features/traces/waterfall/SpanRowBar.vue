@@ -6,11 +6,11 @@
     @mouseenter="$emit('hover', row.span.span_id)"
     @mouseleave="$emit('unhover')"
   >
-    <div class="relative flex-1 h-full mx-1.5">
+    <div class="relative flex-1 h-full mx-1.5 transition-opacity" :style="trackStyle">
       <div
         class="absolute top-1/2 -translate-y-1/2 h-4 rounded-md transition"
         :style="barStyle"
-        :title="`${row.span.name} — ${formatDuration(row.span.duration)}`"
+        :title="barTitle"
       />
       <span
         v-for="(marker, idx) in eventMarkers"
@@ -34,6 +34,10 @@ const props = defineProps<{
   row: FlatSpanRow
   selected: boolean
   hovered: boolean
+  /** This span sits on the trace's critical path. */
+  hot: boolean
+  /** The waterfall's hot-path mode is on. */
+  hotPathEnabled: boolean
   traceStart: number
   traceDuration: number
 }>()
@@ -44,8 +48,25 @@ defineEmits<{
   unhover: []
 }>()
 
+/** Halo in the foreground color: reads against every depth hue, in both themes. */
+const HOT_PATH_RING = '0 0 0 1px var(--ui-bg), 0 0 0 2.5px var(--ui-fg)'
+/** Off-path bars fade into the background but stay visible as context. */
+const OFF_PATH_OPACITY = 0.35
+
 const scheme = useColorScheme()
 const dark = computed(() => scheme.value === 'dark')
+
+const highlighted = computed(() => props.hotPathEnabled && props.hot)
+const dimmed = computed(
+  () => props.hotPathEnabled && !props.hot && !props.selected && !props.hovered,
+)
+
+const trackStyle = computed(() => ({ opacity: dimmed.value ? OFF_PATH_OPACITY : 1 }))
+
+const barTitle = computed(() => {
+  const label = `${props.row.span.name} — ${formatDuration(props.row.span.duration)}`
+  return highlighted.value ? `${label} · hot path` : label
+})
 
 const barStyle = computed(() => {
   const left = Math.min(Math.max(props.row.offsetPercent, 0), 100)
@@ -55,6 +76,7 @@ const barStyle = computed(() => {
     width: `${width}%`,
     minWidth: '3px',
     backgroundColor: getDepthBarColor(props.row.depth, props.row.span.status_code, dark.value),
+    boxShadow: highlighted.value ? HOT_PATH_RING : 'none',
   }
 })
 

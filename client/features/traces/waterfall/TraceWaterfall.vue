@@ -32,6 +32,15 @@
             <Number :value="errorCount" /> error{{ errorCount === 1 ? '' : 's' }}
           </span>
           <span class="ml-auto flex items-center gap-1.5">
+            <Button
+              variant="text"
+              size="sm"
+              :active="showHotPath"
+              title="Highlight the spans that carried the trace's duration"
+              @click="showHotPath = !showHotPath"
+            >
+              Hot path
+            </Button>
             <Button variant="text" size="sm" @click="expandAll">
               Expand all
             </Button>
@@ -108,6 +117,8 @@
               :row="row"
               :selected="row.span.span_id === selectedSpanId"
               :hovered="row.span.span_id === hoveredSpanId"
+              :hot="hotPathIds.has(row.span.span_id)"
+              :hot-path-enabled="showHotPath"
               :trace-start="traceBounds.traceStart"
               :trace-duration="traceBounds.traceDuration"
               @select-span="$emit('select-span', $event)"
@@ -135,6 +146,7 @@ import Button from '~/ui/components/Button.vue'
 import Duration from '~/ui/components/Duration.vue'
 import KeyValue from '~/ui/components/KeyValue.vue'
 import Number from '~/ui/components/Number.vue'
+import { findHotPath } from '~/utils/hot-path'
 import { flattenVisibleTree, spanListToTree } from '~/utils/span-tree'
 import { getTraceBounds } from '~/utils/trace'
 import type { Span, Trace } from '~shared/types'
@@ -172,6 +184,11 @@ const statusText = computed(() => {
 
 const spanTree = computed(() => spanListToTree(props.spans))
 const traceBounds = computed(() => getTraceBounds(props.spans))
+
+/** Span ids on the hot path: every serial phase, plus the chain the trace finished on. */
+const hotPathIds = computed(() => new Set(findHotPath(props.spans).map(span => span.span_id)))
+/** Per-trace inspection mode: switching traces drops back to the plain waterfall. */
+const showHotPath = ref(false)
 
 const expandedState = reactive(new Map<string, boolean>())
 
@@ -246,6 +263,7 @@ watch(
     resetZoom()
     expandedState.clear()
     hoveredSpanId.value = null
+    showHotPath.value = false
   },
 )
 </script>
