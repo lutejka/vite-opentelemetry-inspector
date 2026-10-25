@@ -42,18 +42,18 @@ function toggle() {
   editing.value = !editing.value
 }
 
-async function apply() {
+function apply() {
   if (!valid.value) {
     error.value = 'Max must be greater than min.'
     return
   }
   error.value = null
-  await setScale(name, { min: minValue.value, max: maxValue.value })
+  void setScale(name, { min: minValue.value, max: maxValue.value })
   editing.value = false
 }
 
-async function reset() {
-  await resetScale(name)
+function reset() {
+  void resetScale(name)
   editing.value = false
   error.value = null
 }

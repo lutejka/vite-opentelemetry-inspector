@@ -28,8 +28,30 @@ export function createGaugeScaleController(
   getStore: () => Promise<GaugeScaleSettingsStore>,
 ): GaugeScaleController {
   const overrides = ref<Record<string, GaugeScale>>({})
+  /** Local edits, including `null` tombstones, win over late remote snapshots. */
+  const local = new Map<string, GaugeScale | null>()
   let loaded = false
   let loading: Promise<void> | undefined
+
+  function applyRemote(value: unknown): void {
+    overrides.value = mergeLocal(scalesFromSettings(value))
+  }
+
+  function mergeLocal(remote: Record<string, GaugeScale>): Record<string, GaugeScale> {
+    const merged = { ...remote }
+    for (const [name, scale] of local) {
+      if (scale === null) {
+        delete merged[name]
+        continue
+      }
+      if (sameScale(remote[name], scale)) {
+        local.delete(name)
+        continue
+      }
+      merged[name] = { ...scale }
+    }
+    return merged
+  }
 
   async function load(): Promise<void> {
     if (loaded) return
@@ -38,14 +60,14 @@ export function createGaugeScaleController(
     loading = (async () => {
       try {
         const store = await getStore()
-        overrides.value = scalesFromSettings(await store.all())
+        applyRemote(await store.all())
         await store.onChange((value) => {
-          overrides.value = scalesFromSettings(value)
+          applyRemote(value)
         })
+        loaded = true
       } catch {
         // Settings are optional; keep working with in-memory overrides.
       } finally {
-        loaded = true
         loading = undefined
       }
     })()
@@ -62,19 +84,26 @@ export function createGaugeScaleController(
   }
 
   async function setScale(name: string, scale: GaugeScale): Promise<void> {
-    await load()
-    overrides.value = { ...overrides.value, [name]: { ...scale } }
+    const copy = { ...scale }
+    local.set(name, copy)
+    overrides.value = { ...overrides.value, [name]: copy }
+    void load()
     await persist()
   }
 
   async function resetScale(name: string): Promise<void> {
-    await load()
+    local.set(name, null)
     const { [name]: _removed, ...rest } = overrides.value
     overrides.value = rest
+    void load()
     await persist()
   }
 
   return { overrides, load, setScale, resetScale }
+}
+
+function sameScale(a: GaugeScale | undefined, b: GaugeScale): boolean {
+  return a !== undefined && a.min === b.min && a.max === b.max
 }
 
 function scalesFromSettings(value: unknown): Record<string, GaugeScale> {
@@ -84,7 +113,11 @@ function scalesFromSettings(value: unknown): Record<string, GaugeScale> {
 
 async function getProjectSettings(): Promise<GaugeScaleSettingsStore> {
   const { connectDevframe } = await import('devframe/client')
-  const scoped = (await connectDevframe()).scope(NAMESPACE)
+  const rpc = await connectDevframe()
+  // Settings can report an empty local state before the auth handshake. Wait
+  // for trust so reads see the persisted project file and writes are synced.
+  await rpc.ensureTrusted()
+  const scoped = rpc.scope(NAMESPACE)
   return scoped.settings.project as unknown as GaugeScaleSettingsStore
 }
 

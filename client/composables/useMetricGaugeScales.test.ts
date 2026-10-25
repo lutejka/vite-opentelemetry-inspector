@@ -2,6 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import type { GaugeScaleSettingsStore } from './useMetricGaugeScales'
 import { createGaugeScaleController } from './useMetricGaugeScales'
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+  return { promise, resolve }
+}
+
 function createFakeStore(initial: Record<string, unknown> = {}) {
   let value = { ...initial }
   const listeners = new Set<(next: unknown) => void>()
@@ -90,5 +98,40 @@ describe('createGaugeScaleController', () => {
     await controller.setScale('heap', { min: 0, max: 100 })
 
     expect(controller.overrides.value).toEqual({ heap: { min: 0, max: 100 } })
+  })
+
+  it('applies an override before settings finish loading', async () => {
+    const fake = createFakeStore()
+    const pendingStore = deferred<GaugeScaleSettingsStore>()
+    const controller = createGaugeScaleController(() => pendingStore.promise)
+
+    const pending = controller.setScale('heap', { min: 0, max: 100 })
+
+    expect(controller.overrides.value).toEqual({ heap: { min: 0, max: 100 } })
+
+    pendingStore.resolve(fake.store)
+    await pending
+    expect(fake.value.gaugeScales).toEqual({ heap: { min: 0, max: 100 } })
+  })
+
+  it('keeps a local override when a stale settings snapshot arrives', async () => {
+    const fake = createFakeStore()
+    const controller = createGaugeScaleController(async () => fake.store)
+
+    await controller.setScale('heap', { min: 0, max: 100 })
+    fake.emit({ gaugeScales: {} })
+
+    expect(controller.overrides.value).toEqual({ heap: { min: 0, max: 100 } })
+  })
+
+  it('keeps a reset when a stale settings snapshot still has the scale', async () => {
+    const fake = createFakeStore({ gaugeScales: { heap: { min: 0, max: 100 } } })
+    const controller = createGaugeScaleController(async () => fake.store)
+
+    await controller.load()
+    await controller.resetScale('heap')
+    fake.emit({ gaugeScales: { heap: { min: 0, max: 100 } } })
+
+    expect(controller.overrides.value).toEqual({})
   })
 })
