@@ -1,52 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatNumber } from '~/ui/utils/format'
-import { gaugeArcPath, gaugeFraction, gaugePoint, gaugeValueOutsideScale } from '~/utils/gauge'
+import { gaugeFraction, gaugeValueOutsideScale } from '~/utils/gauge'
 import type { GaugeScale } from '~/utils/gauge'
 
-const VIEW_WIDTH = 320
-const VIEW_HEIGHT = 232
-const CX = 160
-const CY = 150
-const RADIUS = 120
-const NEEDLE_RADIUS = RADIUS - 16
-const TICK_FRACTIONS = [0, 0.25, 0.5, 0.75, 1]
-
-const { value, scale, unit } = defineProps<{
+const { value, scale, unit = null, showValue = true, compact = false } = defineProps<{
   value: number | null
   scale: GaugeScale
   unit?: string | null
+  showValue?: boolean
+  compact?: boolean
 }>()
 
-const fraction = computed(() => gaugeFraction(value, scale))
-const backgroundArc = computed(() => gaugeArcPath(CX, CY, RADIUS, 0, 1))
-const valueArc = computed(() => gaugeArcPath(CX, CY, RADIUS, 0, fraction.value))
+const fractionPercent = computed(() => gaugeFraction(value, scale) * 100)
 const outsideScale = computed(() => gaugeValueOutsideScale(value, scale))
-
-const needle = computed(() => {
-  const angle = Math.PI + fraction.value * Math.PI
-  const end = gaugePoint(CX, CY, NEEDLE_RADIUS, fraction.value)
-  return {
-    x1: CX + Math.cos(angle) * 12,
-    y1: CY + Math.sin(angle) * 12,
-    x2: end.x,
-    y2: end.y,
-  }
-})
-
-const ticks = computed(() =>
-  TICK_FRACTIONS.map((fraction) => {
-    const inner = gaugePoint(CX, CY, RADIUS - 11, fraction)
-    const outer = gaugePoint(CX, CY, RADIUS + 1, fraction)
-    return { x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y }
-  })
-)
-
-const bounds = computed(() => [
-  { key: 'min', value: scale.min, x: CX - RADIUS, y: CY + 22, anchor: 'start' },
-  { key: 'max', value: scale.max, x: CX + RADIUS, y: CY + 22, anchor: 'end' },
-])
-
 const valueText = computed(() => value === null ? '–' : formatNumber(value, { maximumFractionDigits: 2 }))
 
 const ariaLabel = computed(() =>
@@ -59,92 +26,37 @@ function formatBound(bound: number): string {
 </script>
 
 <template>
-  <div class="flex flex-col items-center gap-1">
-    <svg
-      :viewBox="`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`"
-      class="w-full max-w-[360px]"
-      role="img"
-      :aria-label="ariaLabel"
-    >
-      <title>{{ ariaLabel }}</title>
+  <div
+    class="flex flex-col"
+    :class="compact ? 'gap-1' : 'gap-1.5'"
+    role="img"
+    :aria-label="ariaLabel"
+    :title="ariaLabel"
+  >
+    <div v-if="showValue" class="flex items-baseline justify-center gap-1 min-w-0">
+      <span class="text-2xl font-semibold font-mono tabular-nums truncate">{{ valueText }}</span>
+      <span v-if="unit" class="text-xs color-faint truncate">{{ unit }}</span>
+    </div>
 
-      <path
-        :d="backgroundArc"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="10"
-        stroke-linecap="round"
-        opacity="0.12"
+    <div class="relative flex items-center" :class="compact ? 'h-4' : 'h-7'">
+      <div
+        class="absolute inset-x-0 top-1/2 -translate-y-1/2 rounded-full bg-current opacity-20"
+        :class="compact ? 'h-1.5' : 'h-2.5'"
       />
-      <path
-        :d="valueArc"
-        fill="none"
-        stroke="var(--color-primary)"
-        stroke-width="10"
-        stroke-linecap="round"
+      <div
+        v-if="value !== null"
+        class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary shadow-sm"
+        :class="compact ? 'h-3.5 w-0.5' : 'h-6 w-1'"
+        :style="{ left: `${fractionPercent}%` }"
       />
+    </div>
 
-      <line
-        v-for="(tick, index) in ticks"
-        :key="index"
-        :x1="tick.x1"
-        :y1="tick.y1"
-        :x2="tick.x2"
-        :y2="tick.y2"
-        stroke="currentColor"
-        stroke-width="1.5"
-        opacity="0.35"
-      />
+    <div class="flex justify-between gap-2" :class="compact ? 'text-micro' : 'text-xs'">
+      <span class="color-faint truncate">{{ formatBound(scale.min) }}</span>
+      <span class="color-faint truncate text-right">{{ formatBound(scale.max) }}</span>
+    </div>
 
-      <line
-        :x1="needle.x1"
-        :y1="needle.y1"
-        :x2="needle.x2"
-        :y2="needle.y2"
-        stroke="var(--color-primary)"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
-      <circle :cx="CX" :cy="CY" r="5" fill="var(--color-primary)" />
-
-      <text
-        v-for="bound in bounds"
-        :key="bound.key"
-        :x="bound.x"
-        :y="bound.y"
-        :text-anchor="bound.anchor"
-        class="text-micro"
-        fill="currentColor"
-        opacity="0.55"
-      >
-        {{ formatBound(bound.value) }}
-      </text>
-
-      <text
-        :x="CX"
-        :y="CY + 54"
-        text-anchor="middle"
-        class="font-mono tabular-nums"
-        fill="currentColor"
-        font-size="22"
-        font-weight="600"
-      >
-        {{ valueText }}
-      </text>
-      <text
-        v-if="unit"
-        :x="CX"
-        :y="CY + 70"
-        text-anchor="middle"
-        fill="currentColor"
-        font-size="11"
-        opacity="0.55"
-      >
-        {{ unit }}
-      </text>
-    </svg>
-
-    <p v-if="outsideScale" class="text-micro text-warning">
+    <p v-if="outsideScale && showValue" class="text-micro text-warning text-center">
       Latest value is outside the configured scale
     </p>
   </div>

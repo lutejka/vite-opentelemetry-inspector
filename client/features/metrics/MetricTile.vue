@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useMetricGaugeScales } from '~/composables/useMetricGaugeScales'
 import Badge from '~/ui/components/Badge.vue'
 import Button from '~/ui/components/Button.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
 import { sparklinePath } from '~/utils/chart'
+import { resolveGaugeScale } from '~/utils/gauge'
 import type { MetricGroup } from '~/utils/metrics'
 import type { MetricType } from '~shared/types'
+import MetricGauge from './MetricGauge.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
   counter: 'green',
@@ -24,6 +27,8 @@ defineEmits<{
 }>()
 
 const typeColor = computed(() => TYPE_COLORS[group.type])
+const { overrides } = useMetricGaugeScales()
+const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues, overrides.value[group.name] ?? null))
 </script>
 
 <template>
@@ -64,8 +69,16 @@ const typeColor = computed(() => TYPE_COLORS[group.type])
       <span class="text-micro color-faint shrink-0">{{ group.dataPoints.length }} points</span>
     </div>
 
+    <MetricGauge
+      v-if="group.type === 'gauge'"
+      :value="group.latestValue"
+      :scale="gaugeScale"
+      :show-value="false"
+      compact
+    />
+
     <svg
-      v-if="group.sparklineValues.length > 1"
+      v-else-if="group.sparklineValues.length > 1"
       class="w-full h-8"
       preserveAspectRatio="none"
       :viewBox="`0 0 ${group.sparklineValues.length - 1} 1`"

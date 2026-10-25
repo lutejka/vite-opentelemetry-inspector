@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  gaugeArcPath,
   gaugeFraction,
   gaugeValueOutsideScale,
   observedGaugeScale,
@@ -65,16 +64,6 @@ describe('gaugeValueOutsideScale', () => {
     expect(gaugeValueOutsideScale(10, scale)).toBe(false)
     expect(gaugeValueOutsideScale(20, scale)).toBe(false)
     expect(gaugeValueOutsideScale(null, scale)).toBe(false)
-  })
-})
-
-describe('gaugeArcPath', () => {
-  it('draws the full semicircle from left to right', () => {
-    expect(gaugeArcPath(100, 100, 50, 0, 1)).toBe('M 50 100 A 50 50 0 0 1 150 100')
-  })
-
-  it('draws a partial arc to the top', () => {
-    expect(gaugeArcPath(100, 100, 50, 0, 0.5)).toBe('M 50 100 A 50 50 0 0 1 100 50')
   })
 })
 

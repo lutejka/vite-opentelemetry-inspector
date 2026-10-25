@@ -5,7 +5,7 @@ export interface GaugeScale {
 
 /**
  * The finite value range of a gauge series, padded when every point is equal
- * so a flat series still leaves room for the needle to move.
+ * so a flat series still leaves room for the marker to move.
  */
 export function observedGaugeScale(values: readonly number[]): GaugeScale | null {
   let min = Number.POSITIVE_INFINITY
@@ -33,7 +33,7 @@ export function resolveGaugeScale(
   return observedGaugeScale(values) ?? { min: 0, max: 1 }
 }
 
-/** Map a value onto the gauge's 0–1 arc, clamping values outside the scale. */
+/** Map a value onto the gauge track, clamping values outside the scale. */
 export function gaugeFraction(value: number | null, scale: GaugeScale): number {
   if (value === null || !Number.isFinite(value) || !validScale(scale)) return 0
   return clamp((value - scale.min) / (scale.max - scale.min), 0, 1)
@@ -41,31 +41,6 @@ export function gaugeFraction(value: number | null, scale: GaugeScale): number {
 
 export function gaugeValueOutsideScale(value: number | null, scale: GaugeScale): boolean {
   return value !== null && Number.isFinite(value) && (value < scale.min || value > scale.max)
-}
-
-/**
- * SVG path for an arc along the upper half of a circle. Fractions run 0 → 1
- * from the left edge, over the top, to the right edge.
- */
-export function gaugeArcPath(
-  cx: number,
-  cy: number,
-  radius: number,
-  from: number,
-  to: number,
-): string {
-  const start = gaugePoint(cx, cy, radius, from)
-  const end = gaugePoint(cx, cy, radius, to)
-  return `M ${round(start.x)} ${round(start.y)} A ${radius} ${radius} 0 0 1 ${round(end.x)} ${round(end.y)}`
-}
-
-/** A point on the gauge arc, measured clockwise from the left edge. */
-export function gaugePoint(cx: number, cy: number, radius: number, fraction: number): { x: number; y: number } {
-  const angle = Math.PI + clamp(fraction, 0, 1) * Math.PI
-  return {
-    x: cx + Math.cos(angle) * radius,
-    y: cy + Math.sin(angle) * radius,
-  }
 }
 
 /** Keep only valid metric → scale entries from persisted settings. */
@@ -87,8 +62,4 @@ function validScale(scale: GaugeScale): boolean {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100
 }
