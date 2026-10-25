@@ -1,7 +1,7 @@
 import type { DevframeDefinition } from 'devframe'
 import type { Plugin } from 'vite'
 import type { OpentelemetryDevframe, OpentelemetryDevframeOptions } from './devtools.ts'
-import { INGEST_PATH, isInternalRoute } from './otel/ingest.ts'
+import { INGEST_PATH, isInternalRoute, matchesIngestPath } from './otel/ingest.ts'
 
 export { isInternalRoute }
 
@@ -53,7 +53,9 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<unknown
  *   dock (via the `devtools.setup` hook picked up by plugin-scan).
  * - `POST` OTLP JSON (`/v1/traces`, `/v1/logs` and/or `/v1/metrics` shapes, or a merged body)
  *   to the ingest endpoint to push traces/logs/metrics into the panel — the same
- *   contract as `nuxt-otel`'s `{devServerUrl}/__nuxt-otel-ingest`.
+ *   contract as `nuxt-otel`'s `{devServerUrl}/__nuxt-otel-ingest`. Per-signal
+ *   sub-paths under the configured endpoint (e.g. `<ingestPath>/v1/metrics`) are
+ *   accepted, so a standard exporter can target the endpoint as a base URL.
  *
  * ```ts
  * import { viteOpentelemetryInspector } from 'vite-opentelemetry-inspector'
@@ -105,7 +107,7 @@ export function viteOpentelemetryInspector(_options?: ViteOpentelemetryInspector
       if (!ingestEnabled) return
       server.middlewares.use(async (req, res, next) => {
         const url = (req.url || '').split('?')[0] || ''
-        if (url !== ingestPath || req.method !== 'POST') {
+        if (!matchesIngestPath(url, ingestPath) || req.method !== 'POST') {
           next()
           return
         }

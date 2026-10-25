@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ingestOtlpBody } from '../src/otel/ingest.ts'
+import { ingestOtlpBody, matchesIngestPath } from '../src/otel/ingest.ts'
 import { createOtelStore } from '../src/store.ts'
 
 const nano = (ms: number) => String(Math.round(ms * 1_000_000))
@@ -91,5 +91,45 @@ describe('example seed payload', () => {
     })
     expect(store.getTraces()).toHaveLength(2)
     expect(store.getSpans()).toHaveLength(3)
+  })
+})
+
+describe('matchesIngestPath', () => {
+  const ingestPath = '/__opentelemetry-ingest'
+
+  it('matches the endpoint itself', () => {
+    expect(matchesIngestPath('/__opentelemetry-ingest', ingestPath)).toBe(true)
+  })
+
+  it('matches OTLP per-signal sub-paths', () => {
+    expect(matchesIngestPath('/__opentelemetry-ingest/v1/traces', ingestPath)).toBe(true)
+    expect(matchesIngestPath('/__opentelemetry-ingest/v1/logs', ingestPath)).toBe(true)
+    expect(matchesIngestPath('/__opentelemetry-ingest/v1/metrics', ingestPath)).toBe(true)
+  })
+
+  it('matches sub-paths for a custom ingest path', () => {
+    expect(matchesIngestPath('/__otel/v1/metrics', '/__otel')).toBe(true)
+    expect(matchesIngestPath('/__otel', '/__otel')).toBe(true)
+  })
+
+  it('tolerates a trailing slash in the configured path', () => {
+    expect(matchesIngestPath('/__otel', '/__otel/')).toBe(true)
+    expect(matchesIngestPath('/__otel/v1/logs', '/__otel/')).toBe(true)
+  })
+
+  it('rejects look-alike prefixes', () => {
+    expect(matchesIngestPath('/__opentelemetry-ingest-other', ingestPath)).toBe(false)
+    expect(matchesIngestPath('/__opentelemetry-ingestx/v1/traces', ingestPath)).toBe(false)
+  })
+
+  it('rejects unrelated paths', () => {
+    expect(matchesIngestPath('/', ingestPath)).toBe(false)
+    expect(matchesIngestPath('/v1/traces', ingestPath)).toBe(false)
+    expect(matchesIngestPath('', ingestPath)).toBe(false)
+  })
+
+  it('does not turn a root ingest path into a catch-all', () => {
+    expect(matchesIngestPath('/', '/')).toBe(true)
+    expect(matchesIngestPath('/app', '/')).toBe(false)
   })
 })
