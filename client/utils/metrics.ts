@@ -94,6 +94,21 @@ export function groupMetrics(metrics: Metric[]): MetricGroup[] {
   return groups.sort((a, b) => a.name.localeCompare(b.name))
 }
 
+export type MetricTypeFilter = 'all' | MetricType
+
+/** Apply the metrics-page search and type filters to grouped metrics. */
+export function filterMetricGroups(
+  groups: readonly MetricGroup[],
+  query: string,
+  type: MetricTypeFilter,
+): MetricGroup[] {
+  const needle = query.toLowerCase().trim()
+  return groups.filter(group =>
+    (type === 'all' || group.type === type)
+    && (!needle || group.name.toLowerCase().includes(needle)),
+  )
+}
+
 export function metricStats(dataPoints: Metric[]): { min: number; max: number; avg: number } | null {
   let min = Number.POSITIVE_INFINITY
   let max = Number.NEGATIVE_INFINITY

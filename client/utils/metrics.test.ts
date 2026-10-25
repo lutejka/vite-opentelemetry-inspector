@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Metric } from '../../src/types'
-import { groupMetrics, histogramBars, metricPointValue, metricStats } from './metrics'
+import { filterMetricGroups, groupMetrics, histogramBars, metricPointValue, metricStats } from './metrics'
 
 function m(overrides: Partial<Metric>): Metric {
   return {
@@ -84,6 +84,38 @@ describe('metricStats', () => {
     expect(stats).toEqual({ min: 10, max: 30, avg: 20 })
     expect(metricStats([m({ type: 'histogram' })])).toBeNull()
     expect(metricStats([])).toBeNull()
+  })
+})
+
+describe('filterMetricGroups', () => {
+  const groups = groupMetrics([
+    m({ name: 'process.memory.heap', type: 'gauge', timestamp: 1, value: 10 }),
+    m({ name: 'http.requests.total', type: 'counter', timestamp: 2, value: 3 }),
+    m({
+      name: 'http.server.duration',
+      type: 'histogram',
+      timestamp: 3,
+      histogram: { buckets: [], sum: 10, count: 2, min: 1, max: 9 },
+    }),
+  ])
+
+  it('filters by metric type', () => {
+    expect(filterMetricGroups(groups, '', 'gauge').map(g => g.name)).toEqual(['process.memory.heap'])
+    expect(filterMetricGroups(groups, '', 'counter').map(g => g.name)).toEqual(['http.requests.total'])
+    expect(filterMetricGroups(groups, '', 'histogram').map(g => g.name)).toEqual(['http.server.duration'])
+  })
+
+  it('matches the query case-insensitively and trims it', () => {
+    expect(filterMetricGroups(groups, '  MEMORY ', 'all').map(g => g.name)).toEqual(['process.memory.heap'])
+    expect(filterMetricGroups(groups, '   ', 'all')).toEqual(groups)
+  })
+
+  it('combines the type and query filters', () => {
+    expect(filterMetricGroups(groups, 'http', 'all').map(g => g.name)).toEqual([
+      'http.requests.total',
+      'http.server.duration',
+    ])
+    expect(filterMetricGroups(groups, 'http', 'gauge')).toEqual([])
   })
 })
 
