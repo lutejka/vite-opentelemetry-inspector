@@ -75,7 +75,7 @@
     "unbuild": "^3.6.1",
     "unplugin-fonts": "^2.0.0",
     "vite": "^8.0.0",
-    "vitest": "^3.0.0",
+    "vitest": "^5.0.0",
     "vue": "^3.5.0",
     "vue-afloat": "^0.2.0",
     "vue-tsc": "^3.0.0"
