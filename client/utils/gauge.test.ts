@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  gaugeFraction,
-  gaugeValueOutsideScale,
-  observedGaugeScale,
-  resolveGaugeScale,
-  sanitizeGaugeScales,
-} from './gauge'
+import { gaugeFraction, gaugeValueAtFraction, observedGaugeScale, resolveGaugeScale } from './gauge'
 
 describe('observedGaugeScale', () => {
   it('returns the finite min and max of the series', () => {
@@ -17,23 +11,18 @@ describe('observedGaugeScale', () => {
     expect(observedGaugeScale([Number.NaN, Number.NEGATIVE_INFINITY])).toBeNull()
   })
 
-  it('pads a flat series so the needle has room to move', () => {
+  it('pads a flat series so the marker has room to move', () => {
     expect(observedGaugeScale([10])).toEqual({ min: 9, max: 11 })
     expect(observedGaugeScale([0, 0])).toEqual({ min: -1, max: 1 })
   })
 })
 
 describe('resolveGaugeScale', () => {
-  it('uses a valid override before the observed range', () => {
-    expect(resolveGaugeScale([10, 20], { min: 0, max: 100 })).toEqual({ min: 0, max: 100 })
+  it('uses the observed range', () => {
+    expect(resolveGaugeScale([10, 20])).toEqual({ min: 10, max: 20 })
   })
 
-  it('ignores invalid overrides and falls back to the observed range', () => {
-    expect(resolveGaugeScale([10, 20], { min: 20, max: 10 })).toEqual({ min: 10, max: 20 })
-    expect(resolveGaugeScale([10, 20], { min: Number.NaN, max: 30 })).toEqual({ min: 10, max: 20 })
-  })
-
-  it('uses a safe fallback when neither data nor an override exists', () => {
+  it('uses a safe fallback when the series has no finite values', () => {
     expect(resolveGaugeScale([])).toEqual({ min: 0, max: 1 })
   })
 })
@@ -41,7 +30,7 @@ describe('resolveGaugeScale', () => {
 describe('gaugeFraction', () => {
   const scale = { min: 10, max: 20 }
 
-  it('maps a value onto the 0–1 arc and clamps outside the scale', () => {
+  it('maps a value onto the 0–1 track and clamps outside the scale', () => {
     expect(gaugeFraction(10, scale)).toBe(0)
     expect(gaugeFraction(15, scale)).toBe(0.5)
     expect(gaugeFraction(20, scale)).toBe(1)
@@ -55,31 +44,22 @@ describe('gaugeFraction', () => {
   })
 })
 
-describe('gaugeValueOutsideScale', () => {
+describe('gaugeValueAtFraction', () => {
   const scale = { min: 10, max: 20 }
 
-  it('reports values outside the scale only', () => {
-    expect(gaugeValueOutsideScale(9, scale)).toBe(true)
-    expect(gaugeValueOutsideScale(21, scale)).toBe(true)
-    expect(gaugeValueOutsideScale(10, scale)).toBe(false)
-    expect(gaugeValueOutsideScale(20, scale)).toBe(false)
-    expect(gaugeValueOutsideScale(null, scale)).toBe(false)
-  })
-})
-
-describe('sanitizeGaugeScales', () => {
-  it('keeps only finite, ascending scales', () => {
-    expect(sanitizeGaugeScales({
-      good: { min: 0, max: 100 },
-      reversed: { min: 10, max: 1 },
-      text: { min: '0', max: '100' },
-      missing: { min: 0 },
-    })).toEqual({ good: { min: 0, max: 100 } })
+  it('maps a 0–1 position onto the scale', () => {
+    expect(gaugeValueAtFraction(scale, 0)).toBe(10)
+    expect(gaugeValueAtFraction(scale, 0.25)).toBe(12.5)
+    expect(gaugeValueAtFraction(scale, 1)).toBe(20)
   })
 
-  it('returns an empty object for non-record input', () => {
-    expect(sanitizeGaugeScales(null)).toEqual({})
-    expect(sanitizeGaugeScales([])).toEqual({})
-    expect(sanitizeGaugeScales('scale')).toEqual({})
+  it('clamps positions outside 0–1', () => {
+    expect(gaugeValueAtFraction(scale, -1)).toBe(10)
+    expect(gaugeValueAtFraction(scale, 2)).toBe(20)
+    expect(gaugeValueAtFraction(scale, Number.NaN)).toBe(10)
+  })
+
+  it('returns the lower bound for an invalid scale', () => {
+    expect(gaugeValueAtFraction({ min: 20, max: 10 }, 0.5)).toBe(20)
   })
 })

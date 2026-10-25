@@ -24,12 +24,8 @@ export function observedGaugeScale(values: readonly number[]): GaugeScale | null
   return { min, max }
 }
 
-/** A persisted, per-metric gauge range. Invalid overrides are ignored. */
-export function resolveGaugeScale(
-  values: readonly number[],
-  override?: GaugeScale | null,
-): GaugeScale {
-  if (override && validScale(override)) return override
+/** The observed gauge range, with a safe fallback for an empty series. */
+export function resolveGaugeScale(values: readonly number[]): GaugeScale {
   return observedGaugeScale(values) ?? { min: 0, max: 1 }
 }
 
@@ -39,21 +35,11 @@ export function gaugeFraction(value: number | null, scale: GaugeScale): number {
   return clamp((value - scale.min) / (scale.max - scale.min), 0, 1)
 }
 
-export function gaugeValueOutsideScale(value: number | null, scale: GaugeScale): boolean {
-  return value !== null && Number.isFinite(value) && (value < scale.min || value > scale.max)
-}
-
-/** Keep only valid metric → scale entries from persisted settings. */
-export function sanitizeGaugeScales(input: unknown): Record<string, GaugeScale> {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return {}
-
-  const scales: Record<string, GaugeScale> = {}
-  for (const [name, value] of Object.entries(input)) {
-    if (value && typeof value === 'object' && validScale(value as GaugeScale)) {
-      scales[name] = { min: (value as GaugeScale).min, max: (value as GaugeScale).max }
-    }
-  }
-  return scales
+/** Value at a normalized position along the gauge scale, clamped to the scale. */
+export function gaugeValueAtFraction(scale: GaugeScale, fraction: number): number {
+  if (!validScale(scale)) return scale.min
+  const position = Number.isFinite(fraction) ? clamp(fraction, 0, 1) : 0
+  return scale.min + position * (scale.max - scale.min)
 }
 
 function validScale(scale: GaugeScale): boolean {

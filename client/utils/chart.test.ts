@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { areaPath, chartPoints, niceValueTicks, polylinePath, sparklinePath } from './chart'
+import { areaPath, chartPoints, nearestPointIndex, niceValueTicks, polylinePath, sparklinePath } from './chart'
 
 describe('sparklinePath', () => {
   it('normalizes min to 1 and max to 0 across len-1 width', () => {
@@ -11,6 +11,28 @@ describe('sparklinePath', () => {
   it('returns "" for < 2 values', () => {
     expect(sparklinePath([1])).toBe('')
     expect(sparklinePath([])).toBe('')
+  })
+})
+
+describe('nearestPointIndex', () => {
+  const points = [{ x: 0, y: 0 }, { x: 10, y: 1 }, { x: 30, y: 2 }]
+
+  it('returns the closest point by x in either direction', () => {
+    expect(nearestPointIndex(points, 0)).toBe(0)
+    expect(nearestPointIndex(points, 9)).toBe(1)
+    expect(nearestPointIndex(points, 11)).toBe(1)
+    expect(nearestPointIndex(points, 21)).toBe(2)
+    expect(nearestPointIndex(points, 30)).toBe(2)
+  })
+  it('clamps beyond the ends', () => {
+    expect(nearestPointIndex(points, -50)).toBe(0)
+    expect(nearestPointIndex(points, 100)).toBe(2)
+  })
+  it('keeps the earlier point on a tie', () => {
+    expect(nearestPointIndex(points, 20)).toBe(1)
+  })
+  it('returns 0 for empty input', () => {
+    expect(nearestPointIndex([], 10)).toBe(0)
   })
 })
 

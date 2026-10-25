@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Metric } from '../../src/types'
-import { filterMetricGroups, groupMetrics, histogramBars, metricPointValue, metricStats } from './metrics'
+import {
+  filterMetricGroups,
+  groupMetrics,
+  histogramBars,
+  metricPointValue,
+  metricSamples,
+  metricStats,
+} from './metrics'
 
 function m(overrides: Partial<Metric>): Metric {
   return {
@@ -31,6 +38,29 @@ describe('metricPointValue', () => {
     expect(metricPointValue(m({ type: 'histogram', histogram: { buckets: [], sum: 0, count: 0, min: 0, max: 0 } })))
       .toBeNull()
     expect(metricPointValue(m({ type: 'histogram' }))).toBeNull()
+  })
+})
+
+describe('metricSamples', () => {
+  it('returns chronological non-null values paired with their timestamps', () => {
+    expect(metricSamples([
+      m({
+        timestamp: 40,
+        type: 'histogram',
+        histogram: { buckets: [], sum: 100, count: 4, min: 1, max: 9 },
+      }),
+      m({ timestamp: 30, value: 3 }),
+      m({ timestamp: 20, type: 'histogram' }),
+      m({ timestamp: 10, value: 1 }),
+    ])).toEqual([
+      { value: 1, timestamp: 10 },
+      { value: 3, timestamp: 30 },
+      { value: 25, timestamp: 40 },
+    ])
+  })
+
+  it('returns [] for no data points', () => {
+    expect(metricSamples([])).toEqual([])
   })
 })
 

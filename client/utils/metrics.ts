@@ -61,6 +61,25 @@ export function metricPointValue(metric: Metric): number | null {
   return metric.value
 }
 
+export interface MetricSample {
+  value: number
+  timestamp: number
+}
+
+/**
+ * Chronological (oldest first) samples with a numeric value, paired with their
+ * timestamps. Input is expected newest-first, matching `MetricGroup.dataPoints`.
+ */
+export function metricSamples(dataPoints: readonly Metric[]): MetricSample[] {
+  const samples: MetricSample[] = []
+  for (let index = dataPoints.length - 1; index >= 0; index--) {
+    const dataPoint = dataPoints[index]!
+    const value = metricPointValue(dataPoint)
+    if (value !== null) samples.push({ value, timestamp: dataPoint.timestamp })
+  }
+  return samples
+}
+
 export function groupMetrics(metrics: Metric[]): MetricGroup[] {
   const byName = new Map<string, Metric[]>()
   for (const metric of metrics) {
@@ -76,6 +95,7 @@ export function groupMetrics(metrics: Metric[]): MetricGroup[] {
   for (const [name, dataPoints] of byName) {
     dataPoints.sort((a, b) => b.timestamp - a.timestamp)
     const newest = dataPoints[0]!
+    const samples = metricSamples(dataPoints)
     groups.push({
       name,
       type: newest.type,
@@ -83,10 +103,7 @@ export function groupMetrics(metrics: Metric[]): MetricGroup[] {
       unit: newest.unit,
       latestValue: metricPointValue(newest),
       latestHistogram: newest.histogram ?? null,
-      sparklineValues: dataPoints
-        .map(metricPointValue)
-        .filter((value): value is number => value !== null)
-        .reverse(),
+      sparklineValues: samples.map(sample => sample.value),
       dataPoints,
     })
   }

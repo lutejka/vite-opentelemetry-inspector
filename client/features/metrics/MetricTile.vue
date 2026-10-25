@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useMetricGaugeScales } from '~/composables/useMetricGaugeScales'
 import Badge from '~/ui/components/Badge.vue'
 import Button from '~/ui/components/Button.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
-import { sparklinePath } from '~/utils/chart'
 import { resolveGaugeScale } from '~/utils/gauge'
+import { metricSamples } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { MetricType } from '~shared/types'
+import MetricChart from './MetricChart.vue'
 import MetricGauge from './MetricGauge.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
@@ -27,8 +27,12 @@ defineEmits<{
 }>()
 
 const typeColor = computed(() => TYPE_COLORS[group.type])
-const { overrides } = useMetricGaugeScales()
-const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues, overrides.value[group.name] ?? null))
+const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues))
+
+/** Chronological values paired with timestamps; the chart uses timestamps for hover labels. */
+const sparklinePoints = computed(() =>
+  metricSamples(group.dataPoints).map(sample => ({ x: sample.timestamp, y: sample.value }))
+)
 </script>
 
 <template>
@@ -77,20 +81,12 @@ const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues, overr
       compact
     />
 
-    <svg
-      v-else-if="group.sparklineValues.length > 1"
-      class="w-full h-8"
-      preserveAspectRatio="none"
-      :viewBox="`0 0 ${group.sparklineValues.length - 1} 1`"
-    >
-      <polyline
-        :points="sparklinePath(group.sparklineValues)"
-        fill="none"
-        stroke="var(--color-primary)"
-        stroke-width="1.5"
-        vector-effect="non-scaling-stroke"
-        stroke-linejoin="round"
-      />
-    </svg>
+    <MetricChart
+      v-else-if="sparklinePoints.length > 1"
+      compact
+      :height="32"
+      :points="sparklinePoints"
+      :unit="group.unit"
+    />
   </div>
 </template>

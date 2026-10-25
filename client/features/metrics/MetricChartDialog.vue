@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useMetricGaugeScales } from '~/composables/useMetricGaugeScales'
 import Badge from '~/ui/components/Badge.vue'
 import ModalDialog from '~/ui/components/ModalDialog.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
 import type { ChartPoint } from '~/utils/chart'
-import { observedGaugeScale, resolveGaugeScale } from '~/utils/gauge'
+import { resolveGaugeScale } from '~/utils/gauge'
 import { metricPointValue, metricStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { HistogramData, MetricType } from '~shared/types'
-import GaugeScaleEditor from './GaugeScaleEditor.vue'
 import MetricChart from './MetricChart.vue'
 import MetricGauge from './MetricGauge.vue'
 import MetricHistogramChart from './MetricHistogramChart.vue'
@@ -25,8 +23,6 @@ const { group } = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
-
-const { overrides } = useMetricGaugeScales()
 
 const typeColor = computed(() => (group ? TYPE_COLORS[group.type] : 'gray'))
 
@@ -47,13 +43,7 @@ const latestHistogram = computed<HistogramData | null>(() => {
   return group.latestHistogram
 })
 
-const observedGauge = computed(
-  () => observedGaugeScale(group?.sparklineValues ?? []) ?? { min: 0, max: 1 },
-)
-
-const gaugeOverride = computed(() => group ? overrides.value[group.name] ?? null : null)
-
-const gaugeScale = computed(() => resolveGaugeScale(group?.sparklineValues ?? [], gaugeOverride.value))
+const gaugeScale = computed(() => resolveGaugeScale(group?.sparklineValues ?? []))
 
 const statItems = computed(() => [
   { label: 'Latest', value: group?.latestValue ?? null },
@@ -76,12 +66,6 @@ const statItems = computed(() => [
 
       <template v-if="group.type === 'gauge'">
         <MetricGauge :value="group.latestValue" :scale="gaugeScale" :unit="group.unit" />
-        <GaugeScaleEditor
-          :name="group.name"
-          :scale="gaugeScale"
-          :observed="observedGauge"
-          :has-override="gaugeOverride !== null"
-        />
       </template>
 
       <dl class="grid grid-cols-5 gap-2">

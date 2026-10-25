@@ -24,6 +24,23 @@ export function sparklinePath(values: number[]): string {
 }
 
 /**
+ * Index of the point whose x is closest to the given x. Keeps the earlier point
+ * on a tie; returns 0 for empty input.
+ */
+export function nearestPointIndex(points: readonly ChartPoint[], x: number): number {
+  let nearest = 0
+  let bestDistance = Number.POSITIVE_INFINITY
+  for (let index = 0; index < points.length; index++) {
+    const distance = Math.abs(points[index]!.x - x)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      nearest = index
+    }
+  }
+  return nearest
+}
+
+/**
  * Linear value ticks covering [min, max] with 1/2/5 steps (~targetCount ticks).
  * Returns [min] for a flat domain and [] for empty/non-finite input.
  */
