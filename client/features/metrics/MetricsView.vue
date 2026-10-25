@@ -7,6 +7,8 @@ import EmptyState from '~/ui/components/EmptyState.vue'
 import NumberBadge from '~/ui/components/NumberBadge.vue'
 import SearchField from '~/ui/components/SearchField.vue'
 import Toolbar from '~/ui/components/Toolbar.vue'
+import { filterMetricGroups } from '~/utils/metrics'
+import type { MetricTypeFilter } from '~/utils/metrics'
 import MetricChartDialog from './MetricChartDialog.vue'
 import MetricTile from './MetricTile.vue'
 
@@ -14,6 +16,7 @@ const { groups, clearAllMetrics } = useMetrics()
 const { isPinned, togglePin } = useMetricPins()
 
 const query = ref('')
+const typeFilter = ref<MetricTypeFilter>('all')
 const selectedName = ref<string | null>(null)
 const chartOpen = ref(false)
 
@@ -27,17 +30,40 @@ function openChart(name: string) {
   chartOpen.value = true
 }
 
+const typeCounts = computed(() => {
+  const counts: Record<MetricTypeFilter, number> = {
+    all: groups.value.length,
+    counter: 0,
+    histogram: 0,
+    gauge: 0,
+  }
+  for (const group of groups.value) counts[group.type]++
+  return counts
+})
+
+const typeOptions = computed(() => [
+  { value: 'all' as const, label: 'All', count: typeCounts.value.all },
+  { value: 'counter' as const, label: 'Counter', count: typeCounts.value.counter },
+  { value: 'histogram' as const, label: 'Histogram', count: typeCounts.value.histogram },
+  { value: 'gauge' as const, label: 'Gauge', count: typeCounts.value.gauge },
+])
+
 const visibleGroups = computed(() => {
-  const needle = query.value.toLowerCase().trim()
-  const filtered = needle
-    ? groups.value.filter(group => group.name.toLowerCase().includes(needle))
-    : groups.value
+  const filtered = filterMetricGroups(groups.value, query.value, typeFilter.value)
 
   return [...filtered].sort(
     (a, b) =>
       (Number(isPinned(b.name)) - Number(isPinned(a.name)))
       || a.name.localeCompare(b.name),
   )
+})
+
+const emptyHint = computed(() => {
+  const type = typeFilter.value === 'all' ? 'metrics' : `${typeFilter.value} metrics`
+  const needle = query.value.trim()
+  return needle
+    ? `No ${type} found for "${needle}"`
+    : `No ${type} collected yet`
 })
 </script>
 
@@ -50,6 +76,25 @@ const visibleGroups = computed(() => {
       </template>
       <template #end>
         <SearchField v-model="query" size="sm" placeholder="Filter metrics…" />
+        <label class="relative inline-flex items-center">
+          <span class="sr-only">Filter by metric type</span>
+          <select
+            v-model="typeFilter"
+            class="h-7 appearance-none rounded border border-base bg-raised pl-2 pr-7 text-sm color-base outline-none transition focus:ring-2 focus:ring-primary/40"
+          >
+            <option
+              v-for="option in typeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }} ({{ option.count }})
+            </option>
+          </select>
+          <span
+            class="icon-[ph--caret-down] pointer-events-none absolute right-2 text-xs op-fade"
+            aria-hidden="true"
+          />
+        </label>
         <Button size="sm" icon="icon-[ph--trash]" @click="clearAllMetrics">
           Clear
         </Button>
@@ -72,7 +117,7 @@ const visibleGroups = computed(() => {
       title="No matching metrics"
     >
       <template #hint>
-        No metrics found for "{{ query }}"
+        {{ emptyHint }}
       </template>
     </EmptyState>
 

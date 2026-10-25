@@ -105,7 +105,7 @@ export function filterMetricGroups(
   const needle = query.toLowerCase().trim()
   return groups.filter(group =>
     (type === 'all' || group.type === type)
-    && (!needle || group.name.toLowerCase().includes(needle)),
+    && (!needle || group.name.toLowerCase().includes(needle))
   )
 }
 

@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useMetricGaugeScales } from '~/composables/useMetricGaugeScales'
 import Badge from '~/ui/components/Badge.vue'
 import ModalDialog from '~/ui/components/ModalDialog.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
 import type { ChartPoint } from '~/utils/chart'
+import { observedGaugeScale, resolveGaugeScale } from '~/utils/gauge'
 import { metricPointValue, metricStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { HistogramData, MetricType } from '~shared/types'
+import GaugeScaleEditor from './GaugeScaleEditor.vue'
 import MetricChart from './MetricChart.vue'
+import MetricGauge from './MetricGauge.vue'
 import MetricHistogramChart from './MetricHistogramChart.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
@@ -21,6 +25,8 @@ const { group } = defineProps<{
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+
+const { overrides } = useMetricGaugeScales()
 
 const typeColor = computed(() => (group ? TYPE_COLORS[group.type] : 'gray'))
 
@@ -41,6 +47,14 @@ const latestHistogram = computed<HistogramData | null>(() => {
   return group.latestHistogram
 })
 
+const observedGauge = computed(
+  () => observedGaugeScale(group?.sparklineValues ?? []) ?? { min: 0, max: 1 },
+)
+
+const gaugeOverride = computed(() => group ? overrides.value[group.name] ?? null : null)
+
+const gaugeScale = computed(() => resolveGaugeScale(group?.sparklineValues ?? [], gaugeOverride.value))
+
 const statItems = computed(() => [
   { label: 'Latest', value: group?.latestValue ?? null },
   { label: 'Min', value: stats.value?.min ?? null },
@@ -60,6 +74,16 @@ const statItems = computed(() => [
         <span v-if="group.unit" class="text-xs color-faint">Unit: {{ group.unit }}</span>
       </div>
 
+      <template v-if="group.type === 'gauge'">
+        <MetricGauge :value="group.latestValue" :scale="gaugeScale" :unit="group.unit" />
+        <GaugeScaleEditor
+          :name="group.name"
+          :scale="gaugeScale"
+          :observed="observedGauge"
+          :has-override="gaugeOverride !== null"
+        />
+      </template>
+
       <dl class="grid grid-cols-5 gap-2">
         <div v-for="item in statItems" :key="item.label" class="flex flex-col gap-0.5">
           <dt class="text-micro color-faint font-medium uppercase tracking-wide">{{ item.label }}</dt>
@@ -70,8 +94,14 @@ const statItems = computed(() => [
         </div>
       </dl>
 
-      <p v-if="latestHistogram" class="text-micro color-faint">Bucket distribution of the latest data point</p>
-      <MetricHistogramChart v-if="latestHistogram" :histogram="latestHistogram" :unit="group.unit" />
+      <template v-if="group.type === 'gauge'">
+        <p class="text-micro color-faint font-medium uppercase tracking-wide">History</p>
+        <MetricChart :points="chartPoints" :unit="group.unit" />
+      </template>
+      <template v-else-if="latestHistogram">
+        <p class="text-micro color-faint">Bucket distribution of the latest data point</p>
+        <MetricHistogramChart :histogram="latestHistogram" :unit="group.unit" />
+      </template>
       <MetricChart v-else :points="chartPoints" :unit="group.unit" />
     </div>
   </ModalDialog>
