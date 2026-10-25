@@ -1,4 +1,4 @@
-import type { Log, Span, Trace } from './types.ts'
+import type { Log, Metric, Span, Trace } from './types.ts'
 
 /**
  * Framework-free in-memory telemetry store.
@@ -13,19 +13,31 @@ export interface OtelStore {
   getTraces(): Trace[]
   getSpans(traceId?: string): Span[]
   getLogs(): Log[]
+  getMetrics(): Metric[]
   getTrace(traceId: string): { trace: Trace | null; spans: Span[] }
   addTraces(traces: Trace[]): void
   addSpans(spans: Span[]): void
   addLogs(logs: Log[]): void
+  addMetrics(metrics: Metric[]): void
   clearTraces(): void
   clearLogs(): void
+  clearMetrics(): void
   onChange(listener: () => void): () => void
 }
+
+/**
+ * Maximum number of metric data points retained by the store.
+ *
+ * Metrics are high-frequency, so the oldest records are dropped first once
+ * this cap is exceeded.
+ */
+const MAX_METRICS = 1000
 
 export function createOtelStore(): OtelStore {
   let traces: Trace[] = []
   let spans: Span[] = []
   let logs: Log[] = []
+  let metrics: Metric[] = []
   const listeners = new Set<() => void>()
 
   function emit() {
@@ -42,6 +54,7 @@ export function createOtelStore(): OtelStore {
     getTraces: () => traces,
     getSpans: traceId => (traceId ? spans.filter(s => s.trace_id === traceId) : spans),
     getLogs: () => logs,
+    getMetrics: () => metrics,
     getTrace(traceId) {
       return {
         trace: traces.find(t => t.trace_id === traceId) ?? null,
@@ -69,6 +82,11 @@ export function createOtelStore(): OtelStore {
       logs = [...logs, ...fresh]
       emit()
     },
+    addMetrics(newMetrics) {
+      if (newMetrics.length === 0) return
+      metrics = [...metrics, ...newMetrics].slice(-MAX_METRICS)
+      emit()
+    },
     clearTraces() {
       traces = []
       spans = []
@@ -76,6 +94,10 @@ export function createOtelStore(): OtelStore {
     },
     clearLogs() {
       logs = []
+      emit()
+    },
+    clearMetrics() {
+      metrics = []
       emit()
     },
     onChange(listener) {

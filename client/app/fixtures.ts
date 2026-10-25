@@ -1,4 +1,4 @@
-import type { Log, Span, Trace } from '../../src/types.ts'
+import type { Log, Metric, Span, Trace } from '../../src/types.ts'
 
 interface SpanSpec {
   id: string
@@ -13,12 +13,74 @@ interface SpanSpec {
   events?: Array<{ at: number; name: string; attributes?: Record<string, unknown> }>
 }
 
+/**
+ * Deterministic metric fixtures: 3 series × 16 points, 15 s apart, ending at
+ * `now`. Formulas are intentionally simple so sparklines are easy to eyeball.
+ */
+function createMetrics(now: number): Metric[] {
+  const metrics: Metric[] = []
+  for (let i = 0; i < 16; i++) {
+    const timestamp = now - (15 - i) * 15_000
+    metrics.push(
+      {
+        metric_id: `fixture-heap-${i}`,
+        name: 'process.memory.heap',
+        description: 'Heap size',
+        unit: 'By',
+        type: 'gauge',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: 40_000_000 + i * 250_000 + (i % 3) * 1_000_000,
+        histogram: null,
+        attributes: {},
+      },
+      {
+        metric_id: `fixture-requests-${i}`,
+        name: 'http.requests.total',
+        description: 'Total HTTP requests',
+        unit: 'req',
+        type: 'counter',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: (i + 1) * 7,
+        histogram: null,
+        attributes: {},
+      },
+      {
+        metric_id: `fixture-duration-${i}`,
+        name: 'http.server.duration',
+        description: 'Server request duration',
+        unit: 'ms',
+        type: 'histogram',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: null,
+        histogram: {
+          buckets: [
+            { bound: 10, count: 2 },
+            { bound: 50, count: 6 },
+            { bound: 100, count: 5 },
+            { bound: 500, count: 3 },
+          ],
+          sum: 1200 + i * 40,
+          count: 16 + i,
+          min: 4,
+          max: 480,
+        },
+        attributes: { 'http.route': '/api/checkout' },
+      },
+    )
+  }
+  return metrics
+}
+
 /** Deterministic fixtures for local client development (`pnpm dev:client`). */
-export function createFixtures(): Array<{ traces: Trace[]; spans: Span[]; logs: Log[] }> {
+export function createFixtures(): Array<{ traces: Trace[]; spans: Span[]; logs: Log[]; metrics: Metric[] }> {
   const now = Date.now()
   const traces: Trace[] = []
   const spans: Span[] = []
   const logs: Log[] = []
+  const metrics = createMetrics(now)
 
   function addTrace(
     traceId: string,
@@ -369,5 +431,5 @@ export function createFixtures(): Array<{ traces: Trace[]; spans: Span[]; logs: 
     { 'disk.used_percent': 96 },
   )
 
-  return [{ traces, spans, logs }]
+  return [{ traces, spans, logs, metrics }]
 }

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import pkg from '../package.json' with { type: 'json' }
 import { ingestOtlpBody } from './otel/ingest.ts'
 import { createOtelStore } from './store.ts'
-import type { Log, Span, Trace } from './types.ts'
+import type { Log, Metric, Span, Trace } from './types.ts'
 
 /** Namespace of the RPC functions and shared state registered by this devframe. */
 export const OPENTELEMETRY_DEVFRAME_NAMESPACE = 'opentelemetry'
@@ -16,6 +16,7 @@ export interface OpentelemetryDevframeState {
   traces: Trace[]
   spans: Span[]
   logs: Log[]
+  metrics: Metric[]
 }
 
 declare module 'devframe' {
@@ -47,10 +48,13 @@ export interface OpentelemetryDevframe {
   exposeTraces: (traces: Trace[]) => void
   exposeSpans: (spans: Span[]) => void
   exposeLogs: (logs: Log[]) => void
-  /** Ingest a raw OTLP JSON body (`/v1/traces` and/or `/v1/logs` shapes). */
+  /** Record metric data points directly. Safe to call before or after the devframe is set up, and from multiple hosts. */
+  exposeMetrics: (metrics: Metric[]) => void
+  /** Ingest a raw OTLP JSON body (`/v1/traces`, `/v1/logs` and/or `/v1/metrics` shapes). */
   ingest: (body: unknown) => void
   clearTraces: () => void
   clearLogs: () => void
+  clearMetrics: () => void
 }
 
 const FLUSH_DELAY = 50
@@ -99,6 +103,7 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
       traces: [...store.getTraces()],
       spans: [...store.getSpans()],
       logs: [...store.getLogs()],
+      metrics: [...store.getMetrics()],
     }
   }
 
@@ -111,6 +116,7 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
         draft.traces = value.traces
         draft.spans = value.spans
         draft.logs = value.logs
+        draft.metrics = value.metrics
       })
     }
   }
@@ -134,6 +140,10 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     store.addLogs(structuredClone(logs))
   }
 
+  function exposeMetrics(metrics: Metric[]) {
+    store.addMetrics(structuredClone(metrics))
+  }
+
   function ingest(body: unknown) {
     ingestOtlpBody(store, body)
   }
@@ -144,6 +154,10 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
 
   function clearLogs() {
     store.clearLogs()
+  }
+
+  function clearMetrics() {
+    store.clearMetrics()
   }
 
   const getTraces = defineRpcFunction({
@@ -186,6 +200,17 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     handler: () => store.getLogs(),
   })
 
+  const getMetrics = defineRpcFunction({
+    name: 'get-metrics',
+    type: 'query',
+    jsonSerializable: true,
+    agent: {
+      description:
+        'Retrieve collected OpenTelemetry metric data points, oldest first. Flat records — group by `name` to reconstruct a metric series. Safe to call freely.',
+    },
+    handler: () => store.getMetrics(),
+  })
+
   const clearTracesFn = defineRpcFunction({
     name: 'clear-traces',
     type: 'action',
@@ -204,6 +229,15 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     },
   })
 
+  const clearMetricsFn = defineRpcFunction({
+    name: 'clear-metrics',
+    type: 'action',
+    jsonSerializable: true,
+    handler: () => {
+      store.clearMetrics()
+    },
+  })
+
   const definition: DevframeDefinition = defineDevframe({
     id: options.id ?? 'opentelemetry',
     name: options.name ?? 'OpenTelemetry',
@@ -211,7 +245,8 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     packageName: (pkg as { name: string }).name,
     importMetaUrl: import.meta.url,
     homepage: (pkg as { homepage?: string }).homepage ?? 'https://github.com/lutejka/vite-opentelemetry-inspector',
-    description: (pkg as { description?: string }).description ?? 'OpenTelemetry traces & logs inspector devframe',
+    description: (pkg as { description?: string }).description
+      ?? 'OpenTelemetry traces, logs & metrics inspector devframe',
     icon: options.icon ?? 'simple-icons:opentelemetry',
     basePath: options.basePath,
     clientAssets: resolveClientAssets(),
@@ -222,22 +257,35 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
       scoped.rpc.register(getTrace)
       scoped.rpc.register(getSpans)
       scoped.rpc.register(getLogs)
+      scoped.rpc.register(getMetrics)
       scoped.rpc.register(clearTracesFn)
       scoped.rpc.register(clearLogsFn)
+      scoped.rpc.register(clearMetricsFn)
 
       const state = await scoped.rpc.sharedState('otel', {
-        initialValue: { traces: [], spans: [], logs: [] } satisfies OpentelemetryDevframeState,
+        initialValue: { traces: [], spans: [], logs: [], metrics: [] } satisfies OpentelemetryDevframeState,
       })
       const value = snapshot()
       state.mutate((draft) => {
         draft.traces = value.traces
         draft.spans = value.spans
         draft.logs = value.logs
+        draft.metrics = value.metrics
       })
       states.add(state)
       void unsubscribe
     },
   })
 
-  return { definition, exposeTraces, exposeSpans, exposeLogs, ingest, clearTraces, clearLogs }
+  return {
+    definition,
+    exposeTraces,
+    exposeSpans,
+    exposeLogs,
+    exposeMetrics,
+    ingest,
+    clearTraces,
+    clearLogs,
+    clearMetrics,
+  }
 }

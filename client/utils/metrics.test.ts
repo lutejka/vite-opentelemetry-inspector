@@ -1,0 +1,87 @@
+import { describe, expect, it } from 'vitest'
+import type { Metric } from '../../src/types'
+import { groupMetrics, metricPointValue, metricStats } from './metrics'
+
+function m(overrides: Partial<Metric>): Metric {
+  return {
+    metric_id: overrides.timestamp?.toString() ?? 'id',
+    name: 'test',
+    description: null,
+    unit: null,
+    type: 'gauge',
+    service_name: 'demo',
+    timestamp: 0,
+    value: null,
+    histogram: null,
+    attributes: {},
+    ...overrides,
+  }
+}
+
+describe('metricPointValue', () => {
+  it('returns value for counters/gauges and sum/count for histograms', () => {
+    expect(metricPointValue(m({ type: 'counter', value: 7 }))).toBe(7)
+    expect(metricPointValue(m({
+      type: 'histogram',
+      histogram: { buckets: [], sum: 2400, count: 20, min: 4, max: 480 },
+    }))).toBe(120)
+  })
+
+  it('returns null for zero-count and missing histograms', () => {
+    expect(metricPointValue(m({ type: 'histogram', histogram: { buckets: [], sum: 0, count: 0, min: 0, max: 0 } })))
+      .toBeNull()
+    expect(metricPointValue(m({ type: 'histogram' }))).toBeNull()
+  })
+})
+
+describe('groupMetrics', () => {
+  it('groups by name, newest first, latestValue from newest point', () => {
+    const groups = groupMetrics([
+      m({ metric_id: 'a', name: 'b.metric', timestamp: 100, value: 1 }),
+      m({ metric_id: 'b', name: 'a.metric', timestamp: 300, value: 3, unit: 'ms' }),
+      m({ metric_id: 'c', name: 'b.metric', timestamp: 200, value: 2 }),
+    ])
+    expect(groups.map(g => g.name)).toEqual(['a.metric', 'b.metric'])
+    const b = groups[1]!
+    expect(b.latestValue).toBe(2)
+    expect(b.unit).toBeNull()
+    expect(b.dataPoints.map(p => p.timestamp)).toEqual([200, 100])
+    expect(b.sparklineValues).toEqual([1, 2])
+  })
+
+  it('takes type/description/unit from the newest record and averages histograms', () => {
+    const groups = groupMetrics([
+      m({ name: 'h', timestamp: 100, type: 'counter', value: 1 }),
+      m({
+        name: 'h',
+        timestamp: 200,
+        type: 'histogram',
+        unit: 'ms',
+        description: 'dur',
+        histogram: { buckets: [], sum: 100, count: 4, min: 1, max: 50 },
+      }),
+    ])
+    expect(groups[0]!.type).toBe('histogram')
+    expect(groups[0]!.unit).toBe('ms')
+    expect(groups[0]!.description).toBe('dur')
+    expect(groups[0]!.latestValue).toBe(25)
+    expect(groups[0]!.sparklineValues).toEqual([1, 25])
+  })
+
+  it('returns [] for no metrics', () => {
+    expect(groupMetrics([])).toEqual([])
+  })
+})
+
+describe('metricStats', () => {
+  it('computes min/max/avg over non-null values and null for none', () => {
+    const stats = metricStats([
+      m({ timestamp: 1, value: 10 }),
+      m({ timestamp: 2, value: 30 }),
+      m({ timestamp: 3, type: 'histogram' }),
+    ])
+    expect(stats).toEqual({ min: 10, max: 30, avg: 20 })
+    expect(metricStats([m({ type: 'histogram' })])).toBeNull()
+    expect(metricStats([])).toBeNull()
+  })
+})

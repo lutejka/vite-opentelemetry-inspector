@@ -1,6 +1,6 @@
 # vite-opentelemetry-inspector
 
-OpenTelemetry traces & logs inspector as a standalone [Vite](https://vite.dev) plugin built on [devframe](https://devfra.me). Extracted from the devtools UI of [`nuxt-otel`](https://github.com/lutejka/nuxt-otel).
+OpenTelemetry traces, logs & metrics inspector as a standalone [Vite](https://vite.dev) plugin built on [devframe](https://devfra.me). Extracted from the devtools UI of [`nuxt-otel`](https://github.com/lutejka/nuxt-otel).
 
 ## Screenshots
 
@@ -27,12 +27,14 @@ export default defineConfig({
 
 When [Vite DevTools](https://devtools.vite.dev) is enabled, the plugin adds an **OpenTelemetry** panel to its dock during `vite dev`. Pass `devtools: false` to leave the panel out (the ingest endpoint still works).
 
+The panel has **Traces**, **Logs** and **Metrics** tabs. The Metrics tab groups data points by metric name, shows the latest value and a sparkline per metric, and offers pinning plus a full chart view.
+
 The panel is a devframe, so other devframe hosts can mount it too. `vite-opentelemetry-inspector/devtools` exports the definition along with helpers to feed it:
 
 ```ts
 import { createOpentelemetryDevframe } from 'vite-opentelemetry-inspector/devtools'
 
-const { definition, ingest, exposeTraces, exposeSpans, exposeLogs } = createOpentelemetryDevframe()
+const { definition, ingest, exposeTraces, exposeSpans, exposeLogs, exposeMetrics } = createOpentelemetryDevframe()
 // mount `definition` in a devframe host, e.g. `kit.install(definition)`
 ```
 
@@ -44,7 +46,7 @@ const { definition, ingest, exposeTraces, exposeSpans, exposeLogs } = createOpen
 {devServerUrl}/__opentelemetry-ingest
 ```
 
-The endpoint accepts both trace and log OTLP JSON payloads (`/v1/traces` and `/v1/logs` shapes, or a merged body) — the same contract as `nuxt-otel`'s `{devServerUrl}/__nuxt-otel-ingest`. Point any OTel SDK or collector at it:
+The endpoint accepts trace, log and metric OTLP JSON payloads (`/v1/traces`, `/v1/logs`, `/v1/metrics` shapes, or a merged body) — the same contract as `nuxt-otel`'s `{devServerUrl}/__nuxt-otel-ingest`. Point any OTel SDK or collector at it:
 
 ```ts
 // Example: OTLPTraceExporter with a custom url
@@ -61,7 +63,7 @@ import { isInternalRoute } from 'vite-opentelemetry-inspector'
 
 ## MCP
 
-The devframe exposes agent tools (`get-traces`, `get-trace`, `get-spans`, `get-logs`) over the devframe MCP adapter — the equivalent of `nuxt-otel`'s `/__nuxt-otel-mcp` tools.
+The devframe exposes agent tools (`get-traces`, `get-trace`, `get-spans`, `get-logs`, `get-metrics`) over the devframe MCP adapter — the equivalent of `nuxt-otel`'s `/__nuxt-otel-mcp` tools.
 
 MCP support is optional: it requires [`@devframes/agentic`](https://www.npmjs.com/package/@devframes/agentic), which is not installed automatically. Add it to your project:
 

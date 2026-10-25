@@ -11,7 +11,7 @@ const clientDir = fileURLToPath(new URL('.', import.meta.url))
 
 /**
  * Serve the devframe's RPC backend from the Vite dev server, under the same base
- * the SPA is mounted at by devframe hosts, with fixture traces/spans/logs.
+ * the SPA is mounted at by devframe hosts, with fixture traces/spans/logs/metrics.
  */
 function devBridge(): Plugin {
   return {
@@ -21,10 +21,11 @@ function devBridge(): Plugin {
       const { initDevframe } = await import('devframe/initiate')
       const { createOpentelemetryDevframe } = await import('../src/devtools.ts')
       const devframe = createOpentelemetryDevframe()
-      for (const { traces, spans, logs } of createFixtures()) {
+      for (const { traces, spans, logs, metrics } of createFixtures()) {
         devframe.exposeTraces(traces)
         devframe.exposeSpans(spans)
         devframe.exposeLogs(logs)
+        devframe.exposeMetrics(metrics)
       }
       const instance = initDevframe(devframe.definition, {
         base: BASE,

@@ -52,3 +52,26 @@ export interface Log {
   service_name: string
   attributes: Record<string, unknown>
 }
+
+export type MetricType = 'counter' | 'gauge' | 'histogram'
+
+export interface HistogramData {
+  buckets: { bound: number; count: number }[]
+  sum: number
+  count: number
+  min: number
+  max: number
+}
+
+export interface Metric {
+  metric_id: string
+  name: string
+  description: string | null
+  unit: string | null
+  type: MetricType
+  service_name: string
+  timestamp: number
+  value: number | null
+  histogram: HistogramData | null
+  attributes: Record<string, unknown>
+}

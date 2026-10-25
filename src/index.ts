@@ -6,6 +6,6 @@ export type {
   OpentelemetryDevframeUIOptions,
 } from './devtools.ts'
 export { INGEST_PATH } from './otel/ingest.ts'
-export type { Log, Span, Trace } from './types.ts'
+export type { HistogramData, Log, Metric, MetricType, Span, Trace } from './types.ts'
 export { default, isInternalRoute, viteOpentelemetryInspector } from './vite.ts'
 export type { ViteOpentelemetryInspectorOptions } from './vite.ts'

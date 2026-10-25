@@ -1,7 +1,7 @@
 {
   "name": "vite-opentelemetry-inspector",
   "version": "0.0.2",
-  "description": "OpenTelemetry traces & logs inspector as a standalone Vite DevTools devframe",
+  "description": "OpenTelemetry traces, logs & metrics inspector as a standalone Vite DevTools devframe",
   "keywords": [
     "vite",
     "vite-plugin",

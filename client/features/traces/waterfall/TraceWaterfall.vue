@@ -84,7 +84,7 @@
       <div ref="scroller" class="flex-1 min-h-0 overflow-auto" @scroll.passive="onScroll">
         <div class="min-h-full min-w-full flex" :style="{ width: `${nameColWidth + timelineWidth}px` }">
           <div class="sticky left-0 z-30 shrink-0 bg-base border-r border-base" :style="{ width: `${nameColWidth}px` }">
-            <div class="py-1.5 pl-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
+            <div class="py-1.5 pl-1.5" @mouseleave="hoveredSpanId = null">
               <SpanRowName
                 v-for="row in flatRows"
                 :key="row.span.span_id"
@@ -106,7 +106,7 @@
             :style="{ width: `${timelineWidth}px` }"
             @mousedown="onTimelineMouseDown"
           >
-            <div class="py-1.5 space-y-px" @mouseleave="hoveredSpanId = null">
+            <div class="py-1.5" @mouseleave="hoveredSpanId = null">
               <SpanRowBar
                 v-for="row in flatRows"
                 :key="row.span.span_id"

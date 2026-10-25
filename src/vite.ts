@@ -51,8 +51,8 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<unknown
  *
  * - During `vite dev` with Vite DevTools enabled, the panel is added to the
  *   dock (via the `devtools.setup` hook picked up by plugin-scan).
- * - `POST` OTLP JSON (`/v1/traces` and/or `/v1/logs` shapes, or a merged body)
- *   to the ingest endpoint to push traces/logs into the panel — the same
+ * - `POST` OTLP JSON (`/v1/traces`, `/v1/logs` and/or `/v1/metrics` shapes, or a merged body)
+ *   to the ingest endpoint to push traces/logs/metrics into the panel — the same
  *   contract as `nuxt-otel`'s `{devServerUrl}/__nuxt-otel-ingest`.
  *
  * ```ts

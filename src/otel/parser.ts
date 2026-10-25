@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import type { HistogramData, Metric } from '../types.ts'
 import { getAttributeValue, nanoToMs, parseAttributes } from './helper.ts'
 
 export interface IKeyValue {
@@ -113,6 +114,66 @@ interface IResourceLogs {
 
 export interface IExportLogsServiceRequest {
   resourceLogs: IResourceLogs[]
+}
+
+interface INumberDataPoint {
+  timeUnixNano: string
+  asDouble?: number
+  asInt?: string | number
+  attributes?: IKeyValue[]
+  droppedAttributesCount?: number
+}
+
+interface IHistogramDataPoint {
+  timeUnixNano: string
+  count?: string | number
+  sum?: string | number
+  min?: string | number
+  max?: string | number
+  explicitBounds?: number[]
+  bucketCounts?: Array<string | number>
+  attributes?: IKeyValue[]
+  droppedAttributesCount?: number
+}
+
+interface IMetric {
+  name: string
+  description?: string
+  unit?: string
+  sum?: {
+    isMonotonic?: boolean
+    aggregationTemporality?: number
+    dataPoints: INumberDataPoint[]
+  }
+  gauge?: {
+    dataPoints: INumberDataPoint[]
+  }
+  histogram?: {
+    aggregationTemporality?: number
+    dataPoints: IHistogramDataPoint[]
+  }
+  summary?: {
+    dataPoints: unknown[]
+  }
+  exponentialHistogram?: {
+    dataPoints: unknown[]
+  }
+}
+
+interface IScopeMetrics {
+  scope?: IInstrumentationScope
+  metrics: IMetric[]
+  schemaUrl?: string
+}
+
+interface IResourceMetrics {
+  resource?: IResource
+  scopeMetrics?: IScopeMetrics[]
+  schemaUrl?: string
+}
+
+export interface IExportMetricsServiceRequest {
+  resourceMetrics: IResourceMetrics[]
 }
 
 // Output types
@@ -326,4 +387,93 @@ export function parseOTLPLog(otlpData: IExportLogsServiceRequest) {
   }
 
   return { logs }
+}
+
+function getMetricValue(dataPoint: INumberDataPoint): number | null {
+  return dataPoint.asInt !== undefined ? Number(dataPoint.asInt) : (dataPoint.asDouble ?? null)
+}
+
+function getHistogramData(dataPoint: IHistogramDataPoint): HistogramData {
+  return {
+    buckets: (dataPoint.explicitBounds || []).map((bound, index) => ({
+      bound,
+      count: Number(dataPoint.bucketCounts?.[index] ?? 0),
+    })),
+    sum: Number(dataPoint.sum ?? 0),
+    count: Number(dataPoint.count ?? 0),
+    min: Number(dataPoint.min ?? 0),
+    max: Number(dataPoint.max ?? 0),
+  }
+}
+
+export function parseOTLPMetrics(otlpData: IExportMetricsServiceRequest): { metrics: Metric[] } {
+  const metrics: Metric[] = []
+
+  for (const resourceMetric of otlpData.resourceMetrics) {
+    const resourceAttrs = parseAttributes(resourceMetric.resource?.attributes)
+    const serviceName = (resourceAttrs['service.name'] as string) || 'unknown'
+
+    for (const scopeMetric of resourceMetric.scopeMetrics || []) {
+      for (const otlpMetric of scopeMetric.metrics) {
+        const description = otlpMetric.description || null
+        const unit = otlpMetric.unit || null
+
+        if (otlpMetric.sum) {
+          const type: Metric['type'] = otlpMetric.sum.isMonotonic ? 'counter' : 'gauge'
+          for (const dataPoint of otlpMetric.sum.dataPoints) {
+            metrics.push({
+              metric_id: randomUUID(),
+              name: otlpMetric.name,
+              description,
+              unit,
+              type,
+              service_name: serviceName,
+              timestamp: nanoToMs(dataPoint.timeUnixNano),
+              value: getMetricValue(dataPoint),
+              histogram: null,
+              attributes: parseAttributes(dataPoint.attributes),
+            })
+          }
+          continue
+        }
+
+        if (otlpMetric.gauge) {
+          for (const dataPoint of otlpMetric.gauge.dataPoints) {
+            metrics.push({
+              metric_id: randomUUID(),
+              name: otlpMetric.name,
+              description,
+              unit,
+              type: 'gauge',
+              service_name: serviceName,
+              timestamp: nanoToMs(dataPoint.timeUnixNano),
+              value: getMetricValue(dataPoint),
+              histogram: null,
+              attributes: parseAttributes(dataPoint.attributes),
+            })
+          }
+          continue
+        }
+
+        if (otlpMetric.histogram) {
+          for (const dataPoint of otlpMetric.histogram.dataPoints) {
+            metrics.push({
+              metric_id: randomUUID(),
+              name: otlpMetric.name,
+              description,
+              unit,
+              type: 'histogram',
+              service_name: serviceName,
+              timestamp: nanoToMs(dataPoint.timeUnixNano),
+              value: null,
+              histogram: getHistogramData(dataPoint),
+              attributes: parseAttributes(dataPoint.attributes),
+            })
+          }
+        }
+      }
+    }
+  }
+
+  return { metrics }
 }

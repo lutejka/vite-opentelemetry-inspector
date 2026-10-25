@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import LogsView from '~/features/logs/LogsView.vue'
+import MetricsView from '~/features/metrics/MetricsView.vue'
 import TracesView from '~/features/traces/TracesView.vue'
 import Button from '~/ui/components/Button.vue'
 import Tooltip from '~/ui/components/Tooltip.vue'
@@ -14,6 +15,7 @@ const { connect, disconnect } = useOtelStore()
 const tabs = [
   { id: 'traces', label: 'Traces', icon: 'icon-[ph--tree-structure-duotone]' },
   { id: 'logs', label: 'Logs', icon: 'icon-[ph--article-duotone]' },
+  { id: 'metrics', label: 'Metrics', icon: 'icon-[ph--chart-line-up-duotone]' },
 ] as const
 
 const { isDark } = useColorMode()
@@ -50,6 +52,7 @@ onUnmounted(() => {
     </nav>
     <div class="flex-1 min-w-0 flex flex-col min-h-0">
       <TracesView v-if="tab === 'traces'" />
+      <MetricsView v-else-if="tab === 'metrics'" />
       <LogsView v-else />
     </div>
   </div>

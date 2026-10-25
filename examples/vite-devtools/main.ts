@@ -388,6 +388,86 @@ function sampleBody() {
         ],
       },
     ],
+    // Metric values mirror `client/app/fixtures.ts` at its first, middle and
+    // last data points. int64-ish fields arrive as JSON strings, as OTLP JSON
+    // encoders commonly emit them.
+    resourceMetrics: [
+      {
+        resource: { attributes: [{ key: 'service.name', value: str('vite-devtools-demo') }] },
+        scopeMetrics: [
+          {
+            metrics: [
+              {
+                name: 'http.requests.total',
+                description: 'Total HTTP requests',
+                unit: '1',
+                sum: {
+                  isMonotonic: true,
+                  aggregationTemporality: 2,
+                  dataPoints: [
+                    { timeUnixNano: nano(now - 30_000), asInt: '7' },
+                    { timeUnixNano: nano(now - 15_000), asInt: '63' },
+                    { timeUnixNano: nano(now), asInt: '112' },
+                  ],
+                },
+              },
+              {
+                name: 'process.memory.heap',
+                description: 'Heap size',
+                unit: 'By',
+                gauge: {
+                  dataPoints: [
+                    { timeUnixNano: nano(now - 30_000), asDouble: 40_000_000 },
+                    { timeUnixNano: nano(now - 15_000), asDouble: 44_000_000 },
+                    { timeUnixNano: nano(now), asDouble: 43_750_000 },
+                  ],
+                },
+              },
+              {
+                name: 'http.server.duration',
+                description: 'Server request duration',
+                unit: 'ms',
+                histogram: {
+                  aggregationTemporality: 2,
+                  dataPoints: [
+                    {
+                      timeUnixNano: nano(now - 30_000),
+                      count: '16',
+                      sum: '1200',
+                      min: 4,
+                      max: 480,
+                      explicitBounds: [10, 50, 100, 500],
+                      bucketCounts: ['2', '6', '5', '3'],
+                      attributes: [{ key: 'http.route', value: str('/api/checkout') }],
+                    },
+                    {
+                      timeUnixNano: nano(now - 15_000),
+                      count: '24',
+                      sum: '1520',
+                      min: 4,
+                      max: 480,
+                      explicitBounds: [10, 50, 100, 500],
+                      bucketCounts: ['2', '6', '5', '3'],
+                      attributes: [{ key: 'http.route', value: str('/api/checkout') }],
+                    },
+                    {
+                      timeUnixNano: nano(now),
+                      count: '31',
+                      sum: '1800',
+                      min: 4,
+                      max: 480,
+                      explicitBounds: [10, 50, 100, 500],
+                      bucketCounts: ['2', '6', '5', '3'],
+                      attributes: [{ key: 'http.route', value: str('/api/checkout') }],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
   }
 }
 
@@ -407,7 +487,7 @@ async function sendSamples(out: HTMLElement) {
 document.querySelector('#app')!.innerHTML = `
   <h1>vite-opentelemetry-inspector demo</h1>
   <p>Run with Vite DevTools enabled to see the OpenTelemetry panel.</p>
-  <p>Samples seed automatically on load (3 traces, 7 logs).</p>
+  <p>Samples seed automatically on load (3 traces, 7 logs, 3 metrics).</p>
   <button id="send">Resend samples</button>
   <pre id="out"></pre>
 `
@@ -415,5 +495,6 @@ document.querySelector('#app')!.innerHTML = `
 const out = document.querySelector('#out')!
 document.querySelector('#send')!.addEventListener('click', () => void sendSamples(out))
 // Seed on startup so the panel has data immediately (stable span/trace IDs
-// make reseeds idempotent; each load adds one more copy of the logs).
+// make reseeds idempotent; each load adds one more copy of the logs and
+// metric data points).
 void sendSamples(out)

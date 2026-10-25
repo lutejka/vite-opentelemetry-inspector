@@ -1,11 +1,11 @@
 import { ref } from 'vue'
-import type { Log, Span, Trace } from '../../src/types.ts'
+import type { Log, Metric, Span, Trace } from '../../src/types.ts'
 
 /**
  * Devframe-backed telemetry state. Replaces the Nuxt `rpc-connector` plugin
  * (`useState` + `onDevtoolsClientConnected` + `extendClientRpc`) with the
  * framework-neutral `devframe/client` connection:
- * initial snapshot from `get-traces`/`get-spans`/`get-logs` RPC, then live
+ * initial snapshot from `get-traces`/`get-spans`/`get-logs`/`get-metrics` RPC, then live
  * updates from the `opentelemetry:otel` shared state when available,
  * with polling as a fallback.
  */
@@ -13,6 +13,7 @@ import type { Log, Span, Trace } from '../../src/types.ts'
 const traces = ref<Trace[]>([])
 const spans = ref<Span[]>([])
 const logs = ref<Log[]>([])
+const metrics = ref<Metric[]>([])
 const connected = ref(false)
 const error = ref<string | null>(null)
 
@@ -21,14 +22,16 @@ let offSharedState: (() => void) | undefined
 let started = false
 
 async function loadSnapshot(call: (method: string, ...args: unknown[]) => Promise<unknown>) {
-  const [t, s, l] = await Promise.allSettled([
+  const [t, s, l, m] = await Promise.allSettled([
     call('get-traces'),
     call('get-spans'),
     call('get-logs'),
+    call('get-metrics'),
   ])
   if (t.status === 'fulfilled' && Array.isArray(t.value)) traces.value = t.value as Trace[]
   if (s.status === 'fulfilled' && Array.isArray(s.value)) spans.value = s.value as Span[]
   if (l.status === 'fulfilled' && Array.isArray(l.value)) logs.value = l.value as Log[]
+  if (m.status === 'fulfilled' && Array.isArray(m.value)) metrics.value = m.value as Metric[]
 }
 
 async function connect() {
@@ -46,19 +49,25 @@ async function connect() {
     try {
       const state = await scoped.rpc.sharedState?.('otel')
       if (state && typeof state.subscribe === 'function') {
-        offSharedState = state.subscribe((value: { traces?: Trace[]; spans?: Span[]; logs?: Log[] }) => {
-          if (Array.isArray(value?.traces)) traces.value = value.traces
-          if (Array.isArray(value?.spans)) spans.value = value.spans
-          if (Array.isArray(value?.logs)) logs.value = value.logs
-        })
+        offSharedState = state.subscribe(
+          (value: { traces?: Trace[]; spans?: Span[]; logs?: Log[]; metrics?: Metric[] }) => {
+            if (Array.isArray(value?.traces)) traces.value = value.traces
+            if (Array.isArray(value?.spans)) spans.value = value.spans
+            if (Array.isArray(value?.logs)) logs.value = value.logs
+            if (Array.isArray(value?.metrics)) metrics.value = value.metrics
+          },
+        )
         return
       }
       if (state && typeof state.onChange === 'function') {
-        offSharedState = state.onChange((value: { traces?: Trace[]; spans?: Span[]; logs?: Log[] }) => {
-          if (Array.isArray(value?.traces)) traces.value = value.traces
-          if (Array.isArray(value?.spans)) spans.value = value.spans
-          if (Array.isArray(value?.logs)) logs.value = value.logs
-        })
+        offSharedState = state.onChange(
+          (value: { traces?: Trace[]; spans?: Span[]; logs?: Log[]; metrics?: Metric[] }) => {
+            if (Array.isArray(value?.traces)) traces.value = value.traces
+            if (Array.isArray(value?.spans)) spans.value = value.spans
+            if (Array.isArray(value?.logs)) logs.value = value.logs
+            if (Array.isArray(value?.metrics)) metrics.value = value.metrics
+          },
+        )
         return
       }
     } catch {
@@ -105,6 +114,13 @@ async function clearAllLogs() {
   logs.value = []
 }
 
+async function clearAllMetrics() {
+  try {
+    await rpcCall('clear-metrics')
+  } catch {}
+  metrics.value = []
+}
+
 function disconnect() {
   clearInterval(pollTimer)
   offSharedState?.()
@@ -115,6 +131,7 @@ export function useOtelStore() {
     traces,
     spans,
     logs,
+    metrics,
     connected,
     error,
     connect,
@@ -122,5 +139,6 @@ export function useOtelStore() {
     getSpansForTrace,
     clearAllTraces,
     clearAllLogs,
+    clearAllMetrics,
   }
 }

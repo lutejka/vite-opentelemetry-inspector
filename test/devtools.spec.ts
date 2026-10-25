@@ -28,4 +28,22 @@ describe('createOpentelemetryDevframe', () => {
       devframe.ingest({ resourceLogs: [] })
     }).not.toThrow()
   })
+
+  it('buffers metrics before setup via exposeMetrics', () => {
+    const devframe = createOpentelemetryDevframe()
+    expect(() => {
+      devframe.exposeMetrics([{
+        metric_id: 'm1',
+        name: 'test.metric',
+        description: null,
+        unit: null,
+        type: 'gauge',
+        service_name: 'demo',
+        timestamp: 1,
+        value: 1,
+        histogram: null,
+        attributes: {},
+      }])
+    }).not.toThrow()
+  })
 })
