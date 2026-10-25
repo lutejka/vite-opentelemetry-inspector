@@ -447,7 +447,7 @@ function sampleBody() {
                       min: 4,
                       max: 480,
                       explicitBounds: [10, 50, 100, 500],
-                      bucketCounts: ['2', '6', '5', '3'],
+                      bucketCounts: ['3', '9', '7', '5'],
                       attributes: [{ key: 'http.route', value: str('/api/checkout') }],
                     },
                     {
@@ -457,7 +457,7 @@ function sampleBody() {
                       min: 4,
                       max: 480,
                       explicitBounds: [10, 50, 100, 500],
-                      bucketCounts: ['2', '6', '5', '3'],
+                      bucketCounts: ['4', '11', '9', '7'],
                       attributes: [{ key: 'http.route', value: str('/api/checkout') }],
                     },
                   ],

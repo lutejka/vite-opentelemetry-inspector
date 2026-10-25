@@ -6,8 +6,9 @@ import NumberDisplay from '~/ui/components/Number.vue'
 import type { ChartPoint } from '~/utils/chart'
 import { metricPointValue, metricStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
-import type { MetricType } from '~shared/types'
+import type { HistogramData, MetricType } from '~shared/types'
 import MetricChart from './MetricChart.vue'
+import MetricHistogramChart from './MetricHistogramChart.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
   counter: 'green',
@@ -32,6 +33,12 @@ const chartPoints = computed<ChartPoint[]>(() => {
     .reverse()
     .map(dataPoint => ({ x: dataPoint.timestamp, y: metricPointValue(dataPoint) }))
     .filter((point): point is ChartPoint => point.y !== null && Number.isFinite(point.y) && Number.isFinite(point.x))
+})
+
+/** Histogram metrics plot their bucket distribution, not a line of averages. */
+const latestHistogram = computed<HistogramData | null>(() => {
+  if (!group || group.type !== 'histogram') return null
+  return group.latestHistogram
 })
 
 const statItems = computed(() => [
@@ -63,7 +70,9 @@ const statItems = computed(() => [
         </div>
       </dl>
 
-      <MetricChart :points="chartPoints" :unit="group.unit" />
+      <p v-if="latestHistogram" class="text-micro color-faint">Bucket distribution of the latest data point</p>
+      <MetricHistogramChart v-if="latestHistogram" :histogram="latestHistogram" :unit="group.unit" />
+      <MetricChart v-else :points="chartPoints" :unit="group.unit" />
     </div>
   </ModalDialog>
 </template>

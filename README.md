@@ -27,7 +27,7 @@ export default defineConfig({
 
 When [Vite DevTools](https://devtools.vite.dev) is enabled, the plugin adds an **OpenTelemetry** panel to its dock during `vite dev`. Pass `devtools: false` to leave the panel out (the ingest endpoint still works).
 
-The panel has **Traces**, **Logs** and **Metrics** tabs. The Metrics tab groups data points by metric name, shows the latest value and a sparkline per metric, and offers pinning plus a full chart view.
+The panel has **Traces**, **Logs** and **Metrics** tabs. The Metrics tab groups data points by metric name, shows the latest value and a preview per metric (trend sparkline for counters/gauges, bucket bars for histograms), and offers pinning plus a full chart view (a time-series line for counters/gauges, a bucket distribution for histograms).
 
 The panel is a devframe, so other devframe hosts can mount it too. `vite-opentelemetry-inspector/devtools` exports the definition along with helpers to feed it:
 

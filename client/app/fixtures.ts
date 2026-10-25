@@ -21,6 +21,17 @@ function createMetrics(now: number): Metric[] {
   const metrics: Metric[] = []
   for (let i = 0; i < 16; i++) {
     const timestamp = now - (15 - i) * 15_000
+    // Round-robin the extra samples so `count` always equals the bucket sum;
+    // otherwise the histogram chart would invent a large overflow bucket.
+    const durationBuckets = [
+      { bound: 10, count: 2 },
+      { bound: 50, count: 6 },
+      { bound: 100, count: 5 },
+      { bound: 500, count: 3 },
+    ]
+    for (let extra = 0; extra < i; extra++) {
+      durationBuckets[extra % durationBuckets.length]!.count += 1
+    }
     metrics.push(
       {
         metric_id: `fixture-heap-${i}`,
@@ -56,12 +67,7 @@ function createMetrics(now: number): Metric[] {
         timestamp,
         value: null,
         histogram: {
-          buckets: [
-            { bound: 10, count: 2 },
-            { bound: 50, count: 6 },
-            { bound: 100, count: 5 },
-            { bound: 500, count: 3 },
-          ],
+          buckets: durationBuckets.map(bucket => ({ ...bucket })),
           sum: 1200 + i * 40,
           count: 16 + i,
           min: 4,
