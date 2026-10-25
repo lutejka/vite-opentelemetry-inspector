@@ -53,7 +53,7 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@vitejs/devtools-kit": "^0.7.6"
+    "@vitejs/devtools-kit": "^0.8.0"
   },
   "devDependencies": {
     "@devframes/agentic": "1.2.6",
