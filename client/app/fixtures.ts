@@ -80,6 +80,71 @@ function createMetrics(now: number): Metric[] {
   return metrics
 }
 
+let liveTick = 0
+
+/**
+ * One fresh sample for each fixture series, used by the local dev server's
+ * live ticker to exercise chart animations. Values follow slow sine waves so
+ * the gauge marker travels instead of jumping around at random.
+ */
+export function createLiveMetricTick(now = Date.now()): Metric[] {
+  const tick = ++liveTick
+  const phase = now / 10_000
+  const heap = Math.round(40_000_000 + Math.sin(phase) * 4_000_000 + Math.sin(phase * 2.7) * 1_000_000)
+  const requests = Math.round(150 + Math.sin(phase * 1.4) * 30 + Math.sin(phase * 3.1) * 6)
+  const durationBuckets = [2, 6, 5, 3].map((count, index) => ({
+    bound: [10, 50, 100, 500][index]!,
+    count: count + Math.round((Math.sin(phase + index) + 1) * 2),
+  }))
+  const histogramCount = durationBuckets.reduce((sum, bucket) => sum + bucket.count, 0)
+  const histogramSum = Math.round(histogramCount * (75 + Math.sin(phase / 4) * 15))
+
+  return [
+    {
+      metric_id: `live-heap-${now}-${tick}`,
+      name: 'process.memory.heap',
+      description: 'Heap size',
+      unit: 'By',
+      type: 'gauge',
+      service_name: 'vite-devtools-demo',
+      timestamp: now,
+      value: heap,
+      histogram: null,
+      attributes: {},
+    },
+    {
+      metric_id: `live-requests-${now}-${tick}`,
+      name: 'http.requests.total',
+      description: 'Total HTTP requests',
+      unit: 'req',
+      type: 'counter',
+      service_name: 'vite-devtools-demo',
+      timestamp: now,
+      value: requests,
+      histogram: null,
+      attributes: {},
+    },
+    {
+      metric_id: `live-duration-${now}-${tick}`,
+      name: 'http.server.duration',
+      description: 'Server request duration',
+      unit: 'ms',
+      type: 'histogram',
+      service_name: 'vite-devtools-demo',
+      timestamp: now,
+      value: null,
+      histogram: {
+        buckets: durationBuckets,
+        sum: histogramSum,
+        count: histogramCount,
+        min: 4,
+        max: 480,
+      },
+      attributes: { 'http.route': '/api/checkout' },
+    },
+  ]
+}
+
 /** Deterministic fixtures for local client development (`pnpm dev:client`). */
 export function createFixtures(): Array<{ traces: Trace[]; spans: Span[]; logs: Log[]; metrics: Metric[] }> {
   const now = Date.now()

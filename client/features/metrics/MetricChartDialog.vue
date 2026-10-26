@@ -8,7 +8,7 @@ import { resolveGaugeScale } from '~/utils/gauge'
 import { metricPointValue, metricStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { HistogramData, MetricType } from '~shared/types'
-import MetricChart from './MetricChart.vue'
+import MetricLineChart from './MetricLineChart.vue'
 import MetricGauge from './MetricGauge.vue'
 import MetricHistogramChart from './MetricHistogramChart.vue'
 
@@ -80,13 +80,13 @@ const statItems = computed(() => [
 
       <template v-if="group.type === 'gauge'">
         <p class="text-micro color-faint font-medium uppercase tracking-wide">History</p>
-        <MetricChart :points="chartPoints" :unit="group.unit" />
+        <MetricLineChart :points="chartPoints" :unit="group.unit" />
       </template>
       <template v-else-if="latestHistogram">
         <p class="text-micro color-faint">Bucket distribution of the latest data point</p>
         <MetricHistogramChart :histogram="latestHistogram" :unit="group.unit" />
       </template>
-      <MetricChart v-else :points="chartPoints" :unit="group.unit" />
+      <MetricLineChart v-else :points="chartPoints" :unit="group.unit" />
     </div>
   </ModalDialog>
 </template>

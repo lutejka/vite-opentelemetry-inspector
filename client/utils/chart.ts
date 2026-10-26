@@ -91,7 +91,7 @@ export function chartPoints(points: ChartPoint[], width: number, height: number)
 }
 
 /** Build an `M x y L x y ...` path rounded to 2 decimals; '' for empty input. */
-export function polylinePath(points: ChartPoint[]): string {
+export function polylinePath(points: readonly ChartPoint[]): string {
   if (points.length === 0) return ''
 
   const first = points[0]!
@@ -107,7 +107,7 @@ export function polylinePath(points: ChartPoint[]): string {
  * Close the polyline along the bottom edge (`L lastX height L firstX height Z`);
  * '' for fewer than two points.
  */
-export function areaPath(points: ChartPoint[], height: number): string {
+export function areaPath(points: readonly ChartPoint[], height: number): string {
   if (points.length < 2) return ''
 
   const first = points[0]!

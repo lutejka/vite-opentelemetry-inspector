@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useAnimatedPoints } from '~/composables/useAnimatedPoints'
 import { formatNumber } from '~/ui/utils/format'
 import { areaPath, chartPoints, nearestPointIndex, niceValueTicks, polylinePath } from '~/utils/chart'
 import type { ChartPoint } from '~/utils/chart'
@@ -51,7 +52,7 @@ const yAxis = computed(() => {
   }
 })
 
-const plotted = computed(() => {
+const targetPlotted = computed(() => {
   const source = validPoints.value
   const axis = yAxis.value
   if (source.length === 0 || !axis) return []
@@ -75,6 +76,8 @@ const plotted = computed(() => {
     .map((point, index) => {
       const sourcePoint = source[index]!
       return {
+        // Timestamps identify a sample across re-layouts; pixel x alone does not.
+        key: sourcePoint.x,
         x: padding.value.left + point.x,
         y: padding.value.top + point.y,
         time: formatTime(sourcePoint.x),
@@ -82,6 +85,9 @@ const plotted = computed(() => {
       }
     })
 })
+
+/** Eased towards `targetPlotted` so new samples slide in instead of snapping. */
+const plotted = useAnimatedPoints(targetPlotted)
 
 const linePath = computed(() => polylinePath(plotted.value))
 const areaFill = computed(() => (compact ? '' : areaPath(plotted.value, padding.value.top + innerHeight.value)))

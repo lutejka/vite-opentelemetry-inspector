@@ -7,7 +7,7 @@ import { resolveGaugeScale } from '~/utils/gauge'
 import { metricSamples } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { MetricType } from '~shared/types'
-import MetricChart from './MetricChart.vue'
+import MetricLineChart from './MetricLineChart.vue'
 import MetricGauge from './MetricGauge.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
@@ -81,7 +81,7 @@ const sparklinePoints = computed(() =>
       compact
     />
 
-    <MetricChart
+    <MetricLineChart
       v-else-if="sparklinePoints.length > 1"
       compact
       :height="32"

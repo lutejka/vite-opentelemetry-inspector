@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import Unfonts from 'unplugin-fonts/vite'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
-import { createFixtures } from './app/fixtures.ts'
+import { createFixtures, createLiveMetricTick } from './app/fixtures.ts'
 
 const BASE = '/__opentelemetry/'
 const clientDir = fileURLToPath(new URL('.', import.meta.url))
@@ -40,6 +40,14 @@ function devBridge(): Plugin {
           next()
         }
       })
+
+      // Keep one sample per series arriving so the local client exercises live
+      // chart animation. Set OTEL_LIVE_FIXTURES=0 to keep the seed static.
+      if (process.env.OTEL_LIVE_FIXTURES !== '0') {
+        const timer = setInterval(() => devframe.exposeMetrics(createLiveMetricTick()), 1500)
+        server.httpServer?.once('close', () => clearInterval(timer))
+        server.config.logger.info('[otel] live metric fixtures: one sample per series every 1.5s')
+      }
     },
   }
 }

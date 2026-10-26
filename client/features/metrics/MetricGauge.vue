@@ -73,7 +73,7 @@ function formatBound(bound: number): string {
       />
       <div
         v-if="value !== null"
-        class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary shadow-sm"
+        class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary shadow-sm transition-[left] duration-300 ease-out motion-reduce:transition-none"
         :class="compact ? 'h-3.5 w-0.5' : 'h-6 w-1'"
         :style="{ left: `${fractionPercent}%` }"
       />
