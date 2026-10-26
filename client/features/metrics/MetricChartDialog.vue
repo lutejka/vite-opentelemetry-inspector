@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Badge from '~/ui/components/Badge.vue'
 import ModalDialog from '~/ui/components/ModalDialog.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
-import type { ChartPoint } from '~/utils/chart'
+import type { ChartSeries } from '~/utils/chart'
 import { resolveGaugeScale } from '~/utils/gauge'
-import { metricPointValue, metricStats } from '~/utils/metrics'
+import { breakdownKeys, breakdownSeries, latestSeries, sampleStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { HistogramData, MetricType } from '~shared/types'
 import MetricLineChart from './MetricLineChart.vue'
@@ -26,32 +26,107 @@ const open = defineModel<boolean>('open', { required: true })
 
 const typeColor = computed(() => (group ? TYPE_COLORS[group.type] : 'gray'))
 
-const stats = computed(() => (group ? metricStats(group.dataPoints) : null))
+/** Empty string means the aggregate series. */
+const breakdownKey = ref('')
+const labelKeys = computed(() => (group ? breakdownKeys(group.dataPoints) : []))
 
-/** Oldest first; drop points with no numeric value or a non-finite timestamp. */
-const chartPoints = computed<ChartPoint[]>(() => {
-  if (!group) return []
-  return [...group.dataPoints]
-    .reverse()
-    .map(dataPoint => ({ x: dataPoint.timestamp, y: metricPointValue(dataPoint) }))
-    .filter((point): point is ChartPoint => point.y !== null && Number.isFinite(point.y) && Number.isFinite(point.x))
-})
-
-/** Histogram metrics plot their bucket distribution, not a line of averages. */
+/** Histogram metrics also plot their bucket distribution. */
 const latestHistogram = computed<HistogramData | null>(() => {
   if (!group || group.type !== 'histogram') return null
   return group.latestHistogram
 })
 
-const gaugeScale = computed(() => resolveGaugeScale(group?.sparklineValues ?? []))
+/** Gauges show one real series; the selector makes the choice explicit. */
+const gaugeSeriesOptions = computed(() =>
+  group?.type === 'gauge' ? latestSeries(group.dataPoints) : []
+)
+const gaugeSeriesKey = ref('')
+const selectedGauge = computed(
+  () => gaugeSeriesOptions.value.find(series => series.key === gaugeSeriesKey.value)
+    ?? gaugeSeriesOptions.value[0]
+    ?? null,
+)
+const gaugeScale = computed(() =>
+  resolveGaugeScale(selectedGauge.value?.values ?? group?.sparklineValues ?? [])
+)
 
-const statItems = computed(() => [
-  { label: 'Latest', value: group?.latestValue ?? null },
-  { label: 'Min', value: stats.value?.min ?? null },
-  { label: 'Max', value: stats.value?.max ?? null },
-  { label: 'Avg', value: stats.value?.avg ?? null },
-  { label: 'Points', value: group?.dataPoints.length ?? null },
-])
+/**
+ * The aggregate unless a breakdown is selected. For gauges the default history
+ * follows the selected gauge series so the gauge and the line agree; the
+ * `__all__` option exposes the cross-series aggregate.
+ */
+const AGGREGATE_KEY = '__all__'
+
+const chartSeries = computed<ChartSeries[]>(() => {
+  if (!group) return []
+  if (group.type === 'gauge' && breakdownKey.value === '' && selectedGauge.value) {
+    return [{
+      key: selectedGauge.value.key,
+      label: selectedGauge.value.label,
+      points: selectedGauge.value.samples.map(sample => ({ x: sample.timestamp, y: sample.value })),
+    }]
+  }
+
+  const attribute = breakdownKey.value && breakdownKey.value !== AGGREGATE_KEY
+    ? breakdownKey.value
+    : null
+  return breakdownSeries(group.dataPoints, attribute).map(series => ({
+    key: series.label || 'aggregate',
+    label: series.label,
+    points: series.samples.map(sample => ({ x: sample.timestamp, y: sample.value })),
+  }))
+})
+
+/** A gauge's stats follow its selected series; other types use the aggregate line. */
+const stats = computed(() => {
+  if (!group) return null
+  if (group.type === 'gauge' && selectedGauge.value) {
+    const values = selectedGauge.value.values
+    if (values.length === 0) return null
+    let min = Number.POSITIVE_INFINITY
+    let max = Number.NEGATIVE_INFINITY
+    let sum = 0
+    for (const value of values) {
+      min = Math.min(min, value)
+      max = Math.max(max, value)
+      sum += value
+    }
+    return { min, max, avg: sum / values.length }
+  }
+  return sampleStats(group.samples)
+})
+
+watch(() => group?.name, () => {
+  breakdownKey.value = ''
+  gaugeSeriesKey.value = gaugeSeriesOptions.value[0]?.key ?? ''
+})
+
+watch([labelKeys, () => group?.type], ([keys, type]) => {
+  if (breakdownKey.value === AGGREGATE_KEY) {
+    if (type !== 'gauge') breakdownKey.value = ''
+    return
+  }
+  if (breakdownKey.value && !keys.includes(breakdownKey.value)) breakdownKey.value = ''
+})
+
+watch(gaugeSeriesOptions, (options) => {
+  if (!options.some(option => option.key === gaugeSeriesKey.value)) {
+    gaugeSeriesKey.value = options[0]?.key ?? ''
+  }
+})
+
+const statItems = computed(() => {
+  const latest = group?.type === 'gauge'
+    ? selectedGauge.value?.value ?? group.latestValue
+    : group?.latestValue ?? null
+  return [
+    { label: 'Latest', value: latest },
+    { label: 'Min', value: stats.value?.min ?? null },
+    { label: 'Max', value: stats.value?.max ?? null },
+    { label: 'Avg', value: stats.value?.avg ?? null },
+    { label: 'Points', value: group?.dataPoints.length ?? null },
+  ]
+})
 </script>
 
 <template>
@@ -65,7 +140,22 @@ const statItems = computed(() => [
       </div>
 
       <template v-if="group.type === 'gauge'">
-        <MetricGauge :value="group.latestValue" :scale="gaugeScale" :unit="group.unit" />
+        <label v-if="gaugeSeriesOptions.length > 1" class="flex items-center justify-end gap-1 text-xs">
+          <span class="color-faint">Series</span>
+          <select
+            v-model="gaugeSeriesKey"
+            class="h-7 rounded border border-base bg-raised px-2 text-sm color-base outline-none transition focus:ring-2 focus:ring-primary/40"
+          >
+            <option v-for="option in gaugeSeriesOptions" :key="option.key" :value="option.key">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <MetricGauge
+          :value="selectedGauge?.value ?? group.latestValue"
+          :scale="gaugeScale"
+          :unit="group.unit"
+        />
       </template>
 
       <dl class="grid grid-cols-5 gap-2">
@@ -78,15 +168,28 @@ const statItems = computed(() => [
         </div>
       </dl>
 
-      <template v-if="group.type === 'gauge'">
-        <p class="text-micro color-faint font-medium uppercase tracking-wide">History</p>
-        <MetricLineChart :points="chartPoints" :unit="group.unit" />
-      </template>
-      <template v-else-if="latestHistogram">
-        <p class="text-micro color-faint">Bucket distribution of the latest data point</p>
+      <template v-if="group.type === 'histogram' && latestHistogram">
+        <p class="text-micro color-faint">Bucket distribution (all series)</p>
         <MetricHistogramChart :histogram="latestHistogram" :unit="group.unit" />
       </template>
-      <MetricLineChart v-else :points="chartPoints" :unit="group.unit" />
+
+      <template v-if="group.type !== 'histogram' && (chartSeries.length > 0 || labelKeys.length > 0)">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <p class="text-micro color-faint font-medium uppercase tracking-wide">History</p>
+          <label v-if="labelKeys.length > 0 || group.type === 'gauge'" class="flex items-center gap-1 text-xs">
+            <span class="color-faint">Break down by</span>
+            <select
+              v-model="breakdownKey"
+              class="h-7 rounded border border-base bg-raised px-2 text-sm color-base outline-none transition focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="">{{ group.type === 'gauge' ? 'Selected series' : 'None (aggregate)' }}</option>
+              <option v-if="group.type === 'gauge'" :value="AGGREGATE_KEY">All series (aggregate)</option>
+              <option v-for="key in labelKeys" :key="key" :value="key">{{ key }}</option>
+            </select>
+          </label>
+        </div>
+        <MetricLineChart :series="chartSeries" :unit="group.unit" />
+      </template>
     </div>
   </ModalDialog>
 </template>

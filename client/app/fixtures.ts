@@ -14,8 +14,10 @@ interface SpanSpec {
 }
 
 /**
- * Deterministic metric fixtures: 3 series × 16 points, 15 s apart, ending at
+ * Deterministic metric fixtures: 16 points per family, 15 s apart, ending at
  * `now`. Formulas are intentionally simple so sparklines are easy to eyeball.
+ * `http.server.request.count` and `process.memory.heap.space` are multi-series
+ * so the breakdown/selector UI can be exercised locally.
  */
 function createMetrics(now: number): Metric[] {
   const metrics: Metric[] = []
@@ -74,6 +76,54 @@ function createMetrics(now: number): Metric[] {
           max: 480,
         },
         attributes: { 'http.route': '/api/checkout' },
+      },
+      {
+        metric_id: `fixture-http-count-get-${i}`,
+        name: 'http.server.request.count',
+        description: 'HTTP requests by method',
+        unit: '1',
+        type: 'counter',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: 5 + i,
+        histogram: null,
+        attributes: { 'http.request.method': 'GET' },
+      },
+      {
+        metric_id: `fixture-http-count-post-${i}`,
+        name: 'http.server.request.count',
+        description: 'HTTP requests by method',
+        unit: '1',
+        type: 'counter',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: 1 + (i % 3),
+        histogram: null,
+        attributes: { 'http.request.method': 'POST' },
+      },
+      {
+        metric_id: `fixture-heap-space-old-${i}`,
+        name: 'process.memory.heap.space',
+        description: 'Heap space size',
+        unit: 'By',
+        type: 'gauge',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: 30_000_000 + i * 100_000,
+        histogram: null,
+        attributes: { 'v8js.heap.space.name': 'old_space' },
+      },
+      {
+        metric_id: `fixture-heap-space-new-${i}`,
+        name: 'process.memory.heap.space',
+        description: 'Heap space size',
+        unit: 'By',
+        type: 'gauge',
+        service_name: 'vite-devtools-demo',
+        timestamp,
+        value: 2_000_000 + (i % 4) * 500_000,
+        histogram: null,
+        attributes: { 'v8js.heap.space.name': 'new_space' },
       },
     )
   }

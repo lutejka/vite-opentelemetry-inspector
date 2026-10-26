@@ -3,6 +3,21 @@ export interface ChartPoint {
   y: number
 }
 
+/** A named series of domain points, drawn on a shared scale with its siblings. */
+export interface ChartSeries {
+  key: string
+  label: string
+  points: ChartPoint[]
+}
+
+/** Bounds of a chart's x/y domain. */
+export interface ChartDomain {
+  minX: number
+  maxX: number
+  minY: number
+  maxY: number
+}
+
 /**
  * Teley-style normalized sparkline `points` attribute for viewBox `0 0 len-1 1`.
  * Returns '' when there are fewer than two values.
@@ -27,7 +42,7 @@ export function sparklinePath(values: number[]): string {
  * Index of the point whose x is closest to the given x. Keeps the earlier point
  * on a tie; returns 0 for empty input.
  */
-export function nearestPointIndex(points: readonly ChartPoint[], x: number): number {
+export function nearestPointIndex(points: readonly Pick<ChartPoint, 'x'>[], x: number): number {
   let nearest = 0
   let bestDistance = Number.POSITIVE_INFINITY
   for (let index = 0; index < points.length; index++) {
@@ -64,11 +79,20 @@ export function niceValueTicks(min: number, max: number, targetCount = 4): numbe
 }
 
 /**
- * Map domain points into a width x height pixel box, y inverted, x/y clamped to
- * the box. Returns [] for empty input; a single point maps to the box centre.
+ * First point whose x equals the given sample coordinate, or null when the
+ * series has no sample at that x. Used to keep hover readouts honest when
+ * series are sparse and do not share every timestamp.
  */
-export function chartPoints(points: ChartPoint[], width: number, height: number): ChartPoint[] {
-  if (points.length === 0) return []
+export function pointAtX<T extends Pick<ChartPoint, 'x'>>(points: readonly T[], x: number): T | null {
+  return points.find(point => point.x === x) ?? null
+}
+
+/**
+ * Bounds of a point set, or `null` for empty input. Callers are responsible for
+ * filtering non-finite values first.
+ */
+export function chartDomain(points: readonly ChartPoint[]): ChartDomain | null {
+  if (points.length === 0) return null
 
   let minX = Number.POSITIVE_INFINITY
   let maxX = Number.NEGATIVE_INFINITY
@@ -81,13 +105,35 @@ export function chartPoints(points: ChartPoint[], width: number, height: number)
     maxY = Math.max(maxY, point.y)
   }
 
-  const spanX = maxX - minX
-  const spanY = maxY - minY
+  return { minX, maxX, minY, maxY }
+}
 
-  return points.map(point => ({
-    x: spanX === 0 ? width / 2 : clamp(((point.x - minX) / spanX) * width, 0, width),
-    y: spanY === 0 ? height / 2 : clamp(height - ((point.y - minY) / spanY) * height, 0, height),
-  }))
+/**
+ * Map one domain point into a width x height pixel box, y inverted, x/y clamped
+ * to the box. Degenerate axes map to the box centre.
+ */
+export function mapChartPoint(
+  point: ChartPoint,
+  domain: ChartDomain,
+  width: number,
+  height: number,
+): ChartPoint {
+  const spanX = domain.maxX - domain.minX
+  const spanY = domain.maxY - domain.minY
+
+  return {
+    x: spanX === 0 ? width / 2 : clamp(((point.x - domain.minX) / spanX) * width, 0, width),
+    y: spanY === 0 ? height / 2 : clamp(height - ((point.y - domain.minY) / spanY) * height, 0, height),
+  }
+}
+
+/**
+ * Map domain points into a width x height pixel box, y inverted, x/y clamped to
+ * the box. Returns [] for empty input; a single point maps to the box centre.
+ */
+export function chartPoints(points: ChartPoint[], width: number, height: number): ChartPoint[] {
+  const domain = chartDomain(points)
+  return domain ? points.map(point => mapChartPoint(point, domain, width, height)) : []
 }
 
 /** Build an `M x y L x y ...` path rounded to 2 decimals; '' for empty input. */

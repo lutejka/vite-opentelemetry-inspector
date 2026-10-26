@@ -60,6 +60,16 @@ describe('tweenPoints', () => {
     expect(tweenPoints([], to, 0.5)).toEqual(to)
     expect(tweenPoints(from, [], 0.5)).toEqual([])
   })
+
+  it('supports string keys for multi-series layouts', () => {
+    const fromSeries = [{ key: 'a:1', x: 0, y: 10 }, { key: 'b:1', x: 0, y: 20 }]
+    const toSeries = [{ key: 'a:1', x: 5, y: 0 }, { key: 'b:1', x: 5, y: 30 }]
+    expect(tweenPoints(fromSeries, toSeries, 0.5)).toEqual([
+      { key: 'a:1', x: 2.5, y: 5 },
+      { key: 'b:1', x: 2.5, y: 25 },
+    ])
+    expect(sameLayout(toSeries, toSeries)).toBe(true)
+  })
 })
 
 describe('sameLayout', () => {

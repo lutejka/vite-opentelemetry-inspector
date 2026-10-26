@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { areaPath, chartPoints, nearestPointIndex, niceValueTicks, polylinePath, sparklinePath } from './chart'
+import {
+  areaPath,
+  chartDomain,
+  chartPoints,
+  mapChartPoint,
+  nearestPointIndex,
+  niceValueTicks,
+  pointAtX,
+  polylinePath,
+  sparklinePath,
+} from './chart'
 
 describe('sparklinePath', () => {
   it('normalizes min to 1 and max to 0 across len-1 width', () => {
@@ -48,6 +58,45 @@ describe('niceValueTicks', () => {
   it('returns [min] for a flat domain and [] for empty input', () => {
     expect(niceValueTicks(5, 5)).toEqual([5])
     expect(niceValueTicks(Number.NaN, 1)).toEqual([])
+  })
+})
+
+describe('chartDomain', () => {
+  it('returns null for empty input and the exact bounds otherwise', () => {
+    expect(chartDomain([])).toBeNull()
+    expect(chartDomain([{ x: 1, y: 5 }, { x: 3, y: 9 }])).toEqual({ minX: 1, maxX: 3, minY: 5, maxY: 9 })
+  })
+
+  it('keeps degenerate domains degenerate', () => {
+    expect(chartDomain([{ x: 4, y: 7 }])).toEqual({ minX: 4, maxX: 4, minY: 7, maxY: 7 })
+  })
+})
+
+describe('mapChartPoint', () => {
+  const domain = { minX: 0, maxX: 10, minY: 0, maxY: 100 }
+
+  it('maps a custom domain into the pixel box with y inverted', () => {
+    expect(mapChartPoint({ x: 0, y: 0 }, domain, 100, 50)).toEqual({ x: 0, y: 50 })
+    expect(mapChartPoint({ x: 10, y: 100 }, domain, 100, 50)).toEqual({ x: 100, y: 0 })
+  })
+
+  it('centres degenerate axes and clamps outside the domain', () => {
+    const flat = { minX: 5, maxX: 5, minY: 7, maxY: 7 }
+    expect(mapChartPoint({ x: 5, y: 7 }, flat, 100, 50)).toEqual({ x: 50, y: 25 })
+    expect(mapChartPoint({ x: -1, y: 200 }, domain, 100, 50)).toEqual({ x: 0, y: 0 })
+  })
+})
+
+describe('pointAtX', () => {
+  it('returns the exact sample or null', () => {
+    const points = [{ x: 10, y: 1 }, { x: 20, y: 2 }]
+    expect(pointAtX(points, 20)).toEqual({ x: 20, y: 2 })
+    expect(pointAtX(points, 15)).toBeNull()
+  })
+
+  it('returns the first of duplicate x values', () => {
+    const points = [{ x: 10, y: 1 }, { x: 10, y: 2 }]
+    expect(pointAtX(points, 10)).toEqual({ x: 10, y: 1 })
   })
 })
 

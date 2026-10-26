@@ -4,7 +4,6 @@ import Badge from '~/ui/components/Badge.vue'
 import Button from '~/ui/components/Button.vue'
 import NumberDisplay from '~/ui/components/Number.vue'
 import { resolveGaugeScale } from '~/utils/gauge'
-import { metricSamples } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { MetricType } from '~shared/types'
 import MetricLineChart from './MetricLineChart.vue'
@@ -29,10 +28,12 @@ defineEmits<{
 const typeColor = computed(() => TYPE_COLORS[group.type])
 const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues))
 
-/** Chronological values paired with timestamps; the chart uses timestamps for hover labels. */
+/** Chronological aggregated values; the chart uses timestamps for hover labels. */
 const sparklinePoints = computed(() =>
-  metricSamples(group.dataPoints).map(sample => ({ x: sample.timestamp, y: sample.value }))
+  group.samples.map(sample => ({ x: sample.timestamp, y: sample.value }))
 )
+
+const multiSeriesGauge = computed(() => group.type === 'gauge' && group.seriesCount > 1)
 </script>
 
 <template>
@@ -62,19 +63,24 @@ const sparklinePoints = computed(() =>
 
     <div class="flex items-end justify-between gap-2">
       <div class="flex items-baseline gap-1 min-w-0">
-        <NumberDisplay
-          v-if="group.latestValue !== null"
-          :value="group.latestValue"
-          class="text-2xl font-semibold"
-        />
-        <span v-else class="text-2xl font-semibold color-faint">–</span>
-        <span v-if="group.unit" class="text-xs color-faint truncate">{{ group.unit }}</span>
+        <span v-if="multiSeriesGauge" class="text-2xl font-semibold color-base">{{ group.seriesCount }} series</span>
+        <template v-else>
+          <NumberDisplay
+            v-if="group.latestValue !== null"
+            :value="group.latestValue"
+            class="text-2xl font-semibold"
+          />
+          <span v-else class="text-2xl font-semibold color-faint">–</span>
+          <span v-if="group.unit" class="text-xs color-faint truncate">{{ group.unit }}</span>
+        </template>
       </div>
-      <span class="text-micro color-faint shrink-0">{{ group.dataPoints.length }} points</span>
+      <span class="text-micro color-faint shrink-0">
+        {{ group.seriesCount > 1 ? `${group.seriesCount} series · ` : '' }}{{ group.dataPoints.length }} points
+      </span>
     </div>
 
     <MetricGauge
-      v-if="group.type === 'gauge'"
+      v-if="group.type === 'gauge' && !multiSeriesGauge"
       :value="group.latestValue"
       :scale="gaugeScale"
       :show-value="false"
@@ -82,10 +88,10 @@ const sparklinePoints = computed(() =>
     />
 
     <MetricLineChart
-      v-else-if="sparklinePoints.length > 1"
+      v-else-if="sparklinePoints.length > 1 && !multiSeriesGauge"
       compact
       :height="32"
-      :points="sparklinePoints"
+      :series="[{ key: 'aggregate', label: '', points: sparklinePoints }]"
       :unit="group.unit"
     />
   </div>

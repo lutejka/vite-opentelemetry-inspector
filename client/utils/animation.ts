@@ -2,7 +2,7 @@ import type { ChartPoint } from './chart'
 
 /** A chart point whose identity survives re-layouts (usually its source timestamp). */
 export interface KeyedChartPoint extends ChartPoint {
-  key: number
+  key: string | number
 }
 
 /** Decelerating 0..1 easing curve, clamped at both ends. */
@@ -40,7 +40,7 @@ export function tweenPoints<T extends KeyedChartPoint>(
   progress: number,
 ): T[] {
   const t = clamp01(progress)
-  const starts = new Map<number, T>()
+  const starts = new Map<string | number, T>()
   for (const point of from) starts.set(point.key, point)
 
   return to.map((point) => {
