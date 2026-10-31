@@ -10,11 +10,11 @@ importers:
     dependencies:
       '@vitejs/devtools-kit':
         specifier: ^0.8.0
-        version: 0.8.0(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
+        version: 0.8.0(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
     devDependencies:
       '@devframes/agentic':
-        specifier: 1.2.6
-        version: 1.2.6(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+        specifier: 1.3.0
+        version: 1.3.0(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
       '@fontsource-variable/jetbrains-mono':
         specifier: ^5.3.0
         version: 5.3.0
@@ -44,7 +44,7 @@ importers:
         version: 0.7.1
       devframe:
         specifier: 1.2.6
-        version: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+        version: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       dprint:
         specifier: ^0.64.3
         version: 0.64.3
@@ -133,10 +133,10 @@ packages:
     peerDependencies:
       devframe: 1.2.3
 
-  '@devframes/agentic@1.2.6':
-    resolution: {integrity: sha512-MNUuFdkWBYsLv8/GToerFYUEjBloNVm8jyNKH7Sm0PNyU/vtiYgIgh1vv4CBIFDsdwaj5aTbmIu92S1UhPddXA==}
+  '@devframes/agentic@1.3.0':
+    resolution: {integrity: sha512-gdKGiSp/KOQDg74C9WgSjdBaLOuNRhrG7FY/Qp8jTvToQzUNhFMHs+cDiVMiBYaT28KaSXKBQnewxcwjmW8yKw==}
     peerDependencies:
-      devframe: 1.2.6
+      devframe: 1.3.0
 
   '@devframes/hub-ui@1.2.3':
     resolution: {integrity: sha512-pGEAj/dUp4B7fZ73v8Ypn9c/Z9lEziz8E0fH7qTAJqZ9ZGbpQSp8aT3d36T3Ew4X9HE4vcA12IU0p40ZxjSxbw==}
@@ -2737,11 +2737,11 @@ snapshots:
       - ocache
     optional: true
 
-  '@devframes/agentic@1.2.6(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
+  '@devframes/agentic@1.3.0(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
     dependencies:
       '@modelcontextprotocol/client': 2.4.0
       '@modelcontextprotocol/server': 2.4.0
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       h3: 2.0.8(crossws@0.4.16(srvx@1.0.7))
       pathe: 2.0.3
     transitivePeerDependencies:
@@ -2784,31 +2784,31 @@ snapshots:
       - ocache
     optional: true
 
-  '@devframes/hub@1.2.3(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
+  '@devframes/hub@1.2.3(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
     dependencies:
       destr: 2.0.5
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       h3: 2.0.2(crossws@0.4.16(srvx@1.0.7))
       pathe: 2.0.3
       tinyexec: 1.3.1
       zigpty: 0.2.1
     optionalDependencies:
-      '@devframes/agentic': 1.2.6(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      '@devframes/agentic': 1.3.0(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
     transitivePeerDependencies:
       - crossws
       - ocache
     optional: true
 
-  '@devframes/hub@1.2.6(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
+  '@devframes/hub@1.2.6(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)':
     dependencies:
       destr: 2.0.5
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       h3: 2.0.8(crossws@0.4.16(srvx@1.0.7))
       pathe: 2.0.3
       tinyexec: 1.3.1
       zigpty: 0.2.1
     optionalDependencies:
-      '@devframes/agentic': 1.2.6(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      '@devframes/agentic': 1.3.0(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
     transitivePeerDependencies:
       - crossws
       - ocache
@@ -2828,13 +2828,13 @@ snapshots:
       '@devframes/hub': 1.2.3(@devframes/agentic@1.2.3)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6(@devframes/agentic@1.2.3)(cac@7.1.0)(srvx@1.0.7))
     optional: true
 
-  '@devframes/json-render@1.2.3(@devframes/hub@1.2.3(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6))(devframe@1.2.6)':
+  '@devframes/json-render@1.2.3(@devframes/hub@1.2.3(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6))(devframe@1.2.6)':
     dependencies:
       '@json-render/core': 0.21.0(zod@4.6.5)
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       zod: 4.6.5
     optionalDependencies:
-      '@devframes/hub': 1.2.3(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      '@devframes/hub': 1.2.3(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
     optional: true
 
   '@devframes/plugin-inspect@1.2.3(devframe@1.2.3)(vite@8.3.5)':
@@ -3540,11 +3540,11 @@ snapshots:
       - srvx
     optional: true
 
-  '@vitejs/devtools-kit@0.7.6(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
+  '@vitejs/devtools-kit@0.7.6(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
     dependencies:
-      '@devframes/hub': 1.2.3(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
-      '@devframes/json-render': 1.2.3(@devframes/hub@1.2.3(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6))(devframe@1.2.6)
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      '@devframes/hub': 1.2.3(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      '@devframes/json-render': 1.2.3(@devframes/hub@1.2.3(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6))(devframe@1.2.6)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       local-pkg: 1.2.1
       nostics: 1.3.0
       package-manager-detector: 1.9.0
@@ -3557,10 +3557,10 @@ snapshots:
       - srvx
     optional: true
 
-  '@vitejs/devtools-kit@0.8.0(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
+  '@vitejs/devtools-kit@0.8.0(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
     dependencies:
-      '@devframes/hub': 1.2.6(@devframes/agentic@1.2.6)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
-      devframe: 1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7)
+      '@devframes/hub': 1.2.6(@devframes/agentic@1.3.0)(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      devframe: 1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7)
       local-pkg: 1.2.1
       nostics: 1.3.0
       package-manager-detector: 1.9.0
@@ -3572,9 +3572,9 @@ snapshots:
       - ocache
       - srvx
 
-  '@vitejs/devtools-vite@0.7.6(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
+  '@vitejs/devtools-vite@0.7.6(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)':
     dependencies:
-      '@vitejs/devtools-kit': 0.7.6(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
+      '@vitejs/devtools-kit': 0.7.6(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
       envinfo: 7.21.0
       nostics: 1.3.0
       pathe: 2.0.3
@@ -3607,7 +3607,7 @@ snapshots:
       pathe: 2.0.3
       vite: 8.3.5(@types/node@26.6.5)(@vitejs/devtools@0.7.6)(esbuild@0.28.2)(jiti@2.7.0)
     optionalDependencies:
-      '@vitejs/devtools-vite': 0.7.6(@devframes/agentic@1.2.6)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
+      '@vitejs/devtools-vite': 0.7.6(@devframes/agentic@1.3.0)(cac@7.1.0)(crossws@0.4.16(srvx@1.0.7))(srvx@1.0.7)(vite@8.3.5)
     transitivePeerDependencies:
       - '@devframes/json-render'
       - '@devframes/plugin-inspect--assets'
@@ -3945,14 +3945,14 @@ snapshots:
       - srvx
     optional: true
 
-  devframe@1.2.6(@devframes/agentic@1.2.6)(cac@7.1.0)(srvx@1.0.7):
+  devframe@1.2.6(@devframes/agentic@1.3.0)(cac@7.1.0)(srvx@1.0.7):
     dependencies:
       crossws: 0.4.16(srvx@1.0.7)
       h3: 2.0.8(crossws@0.4.16(srvx@1.0.7))
       nostics: 1.3.0
       pathe: 2.0.3
     optionalDependencies:
-      '@devframes/agentic': 1.2.6(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
+      '@devframes/agentic': 1.3.0(crossws@0.4.16(srvx@1.0.7))(devframe@1.2.6)
       cac: 7.1.0
     transitivePeerDependencies:
       - ocache
