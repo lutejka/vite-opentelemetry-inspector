@@ -12,7 +12,7 @@ import type { Log, Metric, Span, Trace } from './types.ts'
 export interface OtelStore {
   getTraces(): Trace[]
   getSpans(traceId?: string): Span[]
-  getLogs(): Log[]
+  getLogs(traceId?: string): Log[]
   getMetrics(): Metric[]
   getTrace(traceId: string): { trace: Trace | null; spans: Span[] }
   addTraces(traces: Trace[]): void
@@ -53,7 +53,7 @@ export function createOtelStore(): OtelStore {
   return {
     getTraces: () => traces,
     getSpans: traceId => (traceId ? spans.filter(s => s.trace_id === traceId) : spans),
-    getLogs: () => logs,
+    getLogs: traceId => (traceId ? logs.filter((log) => log.trace_id === traceId) : logs),
     getMetrics: () => metrics,
     getTrace(traceId) {
       return {

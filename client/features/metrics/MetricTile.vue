@@ -6,8 +6,8 @@ import NumberDisplay from '~/ui/components/Number.vue'
 import { resolveGaugeScale } from '~/utils/gauge'
 import type { MetricGroup } from '~/utils/metrics'
 import type { MetricType } from '~shared/types'
-import MetricLineChart from './MetricLineChart.vue'
 import MetricGauge from './MetricGauge.vue'
+import MetricLineChart from './MetricLineChart.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
   counter: 'green',
@@ -29,9 +29,7 @@ const typeColor = computed(() => TYPE_COLORS[group.type])
 const gaugeScale = computed(() => resolveGaugeScale(group.sparklineValues))
 
 /** Chronological aggregated values; the chart uses timestamps for hover labels. */
-const sparklinePoints = computed(() =>
-  group.samples.map(sample => ({ x: sample.timestamp, y: sample.value }))
-)
+const sparklinePoints = computed(() => group.samples.map(sample => ({ x: sample.timestamp, y: sample.value })))
 
 const multiSeriesGauge = computed(() => group.type === 'gauge' && group.seriesCount > 1)
 </script>

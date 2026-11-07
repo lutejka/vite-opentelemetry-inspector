@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { KeyedChartPoint } from '~/utils/animation'
 import { useAnimatedPoints } from '~/composables/useAnimatedPoints'
 import { formatNumber } from '~/ui/utils/format'
-import { areaPath, chartDomain, mapChartPoint, nearestPointIndex, niceValueTicks, pointAtX, polylinePath } from '~/utils/chart'
+import type { KeyedChartPoint } from '~/utils/animation'
+import {
+  areaPath,
+  chartDomain,
+  mapChartPoint,
+  nearestPointIndex,
+  niceValueTicks,
+  pointAtX,
+  polylinePath,
+} from '~/utils/chart'
 import type { ChartDomain, ChartPoint, ChartSeries } from '~/utils/chart'
 import MetricHoverReadout from './MetricHoverReadout.vue'
 
@@ -82,9 +90,7 @@ function toggleSeries(key: string) {
     : [...hiddenKeys.value, key]
 }
 
-const visibleSeries = computed(() =>
-  validSeries.value.filter(entry => !hiddenKeys.value.includes(entry.key))
-)
+const visibleSeries = computed(() => validSeries.value.filter(entry => !hiddenKeys.value.includes(entry.key)))
 
 /**
  * Nice ticks cover the data range by construction (`floor(min/step)`…`ceil(max/step)`),

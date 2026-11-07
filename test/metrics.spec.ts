@@ -22,7 +22,9 @@ function numberMetric(overrides: Record<string, unknown> = {}) {
 
 describe('parseOTLPMetrics', () => {
   it('parses monotonic sums as counters with string-encoded ints converted', () => {
-    const { metrics } = parseOTLPMetrics({ resourceMetrics: [{ resource, scopeMetrics: [{ metrics: [numberMetric()] }] }] })
+    const { metrics } = parseOTLPMetrics({
+      resourceMetrics: [{ resource, scopeMetrics: [{ metrics: [numberMetric()] }] }],
+    })
     expect(metrics).toHaveLength(1)
     const m = metrics[0]!
     expect(m.type).toBe('counter')
@@ -43,7 +45,10 @@ describe('parseOTLPMetrics', () => {
         resource,
         scopeMetrics: [{
           metrics: [
-            numberMetric({ name: 'queue.size', sum: { isMonotonic: false, dataPoints: [{ timeUnixNano: nano(2000), asDouble: 3.5 }] } }),
+            numberMetric({
+              name: 'queue.size',
+              sum: { isMonotonic: false, dataPoints: [{ timeUnixNano: nano(2000), asDouble: 3.5 }] },
+            }),
             { name: 'cpu.load', gauge: { dataPoints: [{ timeUnixNano: nano(3000), asDouble: 0.75 }] } },
           ],
         }],
@@ -142,7 +147,10 @@ describe('ingestOtlpBody metrics', () => {
           }],
         }],
       }],
-      resourceLogs: [{ resource, scopeLogs: [{ logRecords: [{ timeUnixNano: nano(1200), severityNumber: 9, body: { stringValue: 'hi' } }] }] }],
+      resourceLogs: [{
+        resource,
+        scopeLogs: [{ logRecords: [{ timeUnixNano: nano(1200), severityNumber: 9, body: { stringValue: 'hi' } }] }],
+      }],
     })
     expect(store.getTraces()).toHaveLength(1)
     expect(store.getLogs()).toHaveLength(1)

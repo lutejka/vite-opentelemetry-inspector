@@ -112,10 +112,38 @@ describe('groupMetrics', () => {
 
   it('aggregates same-timestamp series and exposes the series count', () => {
     const groups = groupMetrics([
-      m({ metric_id: 'a1', timestamp: 100, service_name: 'demo', type: 'counter', value: 1, attributes: { method: 'GET' } }),
-      m({ metric_id: 'a2', timestamp: 100, service_name: 'demo', type: 'counter', value: 2, attributes: { method: 'POST' } }),
-      m({ metric_id: 'a3', timestamp: 200, service_name: 'demo', type: 'counter', value: 3, attributes: { method: 'GET' } }),
-      m({ metric_id: 'a4', timestamp: 200, service_name: 'demo', type: 'counter', value: 4, attributes: { method: 'POST' } }),
+      m({
+        metric_id: 'a1',
+        timestamp: 100,
+        service_name: 'demo',
+        type: 'counter',
+        value: 1,
+        attributes: { method: 'GET' },
+      }),
+      m({
+        metric_id: 'a2',
+        timestamp: 100,
+        service_name: 'demo',
+        type: 'counter',
+        value: 2,
+        attributes: { method: 'POST' },
+      }),
+      m({
+        metric_id: 'a3',
+        timestamp: 200,
+        service_name: 'demo',
+        type: 'counter',
+        value: 3,
+        attributes: { method: 'GET' },
+      }),
+      m({
+        metric_id: 'a4',
+        timestamp: 200,
+        service_name: 'demo',
+        type: 'counter',
+        value: 4,
+        attributes: { method: 'POST' },
+      }),
     ])
     expect(groups[0]!.samples).toEqual([
       { timestamp: 100, value: 3 },
@@ -128,9 +156,23 @@ describe('groupMetrics', () => {
 
   it('merges histograms reported at the newest timestamp', () => {
     const groups = groupMetrics([
-      m({ timestamp: 100, type: 'histogram', attributes: { route: '/a' }, histogram: { buckets: [{ bound: 10, count: 1 }], sum: 10, count: 1, min: 10, max: 10 } }),
-      m({ timestamp: 100, type: 'histogram', attributes: { route: '/b' }, histogram: { buckets: [{ bound: 10, count: 2 }, { bound: 50, count: 1 }], sum: 70, count: 3, min: 5, max: 60 } }),
-      m({ timestamp: 50, type: 'histogram', histogram: { buckets: [{ bound: 10, count: 9 }], sum: 90, count: 9, min: 1, max: 9 } }),
+      m({
+        timestamp: 100,
+        type: 'histogram',
+        attributes: { route: '/a' },
+        histogram: { buckets: [{ bound: 10, count: 1 }], sum: 10, count: 1, min: 10, max: 10 },
+      }),
+      m({
+        timestamp: 100,
+        type: 'histogram',
+        attributes: { route: '/b' },
+        histogram: { buckets: [{ bound: 10, count: 2 }, { bound: 50, count: 1 }], sum: 70, count: 3, min: 5, max: 60 },
+      }),
+      m({
+        timestamp: 50,
+        type: 'histogram',
+        histogram: { buckets: [{ bound: 10, count: 9 }], sum: 90, count: 9, min: 1, max: 9 },
+      }),
     ])
     expect(groups[0]!.latestHistogram).toEqual({
       buckets: [{ bound: 10, count: 3 }, { bound: 50, count: 1 }],
@@ -343,11 +385,15 @@ describe('breakdownSeries', () => {
 
   it('returns one aggregated series for null', () => {
     expect(breakdownSeries(points, null)).toEqual([
-      { key: '', label: '', samples: [
-        { timestamp: 10, value: 3 },
-        { timestamp: 20, value: 7 },
-        { timestamp: 30, value: 5 },
-      ] },
+      {
+        key: '',
+        label: '',
+        samples: [
+          { timestamp: 10, value: 3 },
+          { timestamp: 20, value: 7 },
+          { timestamp: 30, value: 5 },
+        ],
+      },
     ])
   })
 
@@ -408,15 +454,19 @@ describe('latestSeries', () => {
   })
 
   it('labels an attribute-free series with its service name', () => {
-    expect(latestSeries([
-      m({ timestamp: 10, service_name: 'demo', value: 7 }),
-    ]).map(series => series.label)).toEqual(['demo'])
+    expect(
+      latestSeries([
+        m({ timestamp: 10, service_name: 'demo', value: 7 }),
+      ]).map(series => series.label),
+    ).toEqual(['demo'])
   })
 
   it('does not repeat the service name for attribute-free series from different services', () => {
-    expect(latestSeries([
-      m({ timestamp: 10, service_name: 'a', value: 1 }),
-      m({ timestamp: 10, service_name: 'b', value: 2 }),
-    ]).map(series => series.label)).toEqual(['a', 'b'])
+    expect(
+      latestSeries([
+        m({ timestamp: 10, service_name: 'a', value: 1 }),
+        m({ timestamp: 10, service_name: 'b', value: 2 }),
+      ]).map(series => series.label),
+    ).toEqual(['a', 'b'])
   })
 })

@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import pkg from '../package.json' with { type: 'json' }
 import { ingestOtlpBody } from './otel/ingest.ts'
+import { getRpcs } from './rpc.ts'
 import { createOtelStore } from './store.ts'
 import type { Log, Metric, Span, Trace } from './types.ts'
 
@@ -160,84 +161,6 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     store.clearMetrics()
   }
 
-  const getTraces = defineRpcFunction({
-    name: 'get-traces',
-    type: 'query',
-    jsonSerializable: true,
-    agent: {
-      description: 'Retrieve all collected OpenTelemetry traces, newest last. Safe to call freely.',
-    },
-    handler: () => store.getTraces(),
-  })
-
-  const getTrace = defineRpcFunction({
-    name: 'get-trace',
-    type: 'query',
-    jsonSerializable: true,
-    agent: {
-      description: 'Retrieve a single trace and its spans by trace_id. Safe to call freely.',
-    },
-    handler: (traceId: string) => store.getTrace(traceId),
-  })
-
-  const getSpans = defineRpcFunction({
-    name: 'get-spans',
-    type: 'query',
-    jsonSerializable: true,
-    agent: {
-      description: 'Retrieve collected spans, optionally filtered by trace_id. Safe to call freely.',
-    },
-    handler: (traceId?: string) => store.getSpans(traceId),
-  })
-
-  const getLogs = defineRpcFunction({
-    name: 'get-logs',
-    type: 'query',
-    jsonSerializable: true,
-    agent: {
-      description: 'Retrieve all collected OpenTelemetry logs, oldest first. Safe to call freely.',
-    },
-    handler: () => store.getLogs(),
-  })
-
-  const getMetrics = defineRpcFunction({
-    name: 'get-metrics',
-    type: 'query',
-    jsonSerializable: true,
-    agent: {
-      description:
-        'Retrieve collected OpenTelemetry metric data points, oldest first. Flat records — group by `name` to reconstruct a metric series. Safe to call freely.',
-    },
-    handler: () => store.getMetrics(),
-  })
-
-  const clearTracesFn = defineRpcFunction({
-    name: 'clear-traces',
-    type: 'action',
-    jsonSerializable: true,
-    handler: () => {
-      store.clearTraces()
-    },
-  })
-
-  const clearLogsFn = defineRpcFunction({
-    name: 'clear-logs',
-    type: 'action',
-    jsonSerializable: true,
-    handler: () => {
-      store.clearLogs()
-    },
-  })
-
-  const clearMetricsFn = defineRpcFunction({
-    name: 'clear-metrics',
-    type: 'action',
-    jsonSerializable: true,
-    handler: () => {
-      store.clearMetrics()
-    },
-  })
-
   const definition: DevframeDefinition = defineDevframe({
     id: options.id ?? 'opentelemetry',
     name: options.name ?? 'OpenTelemetry',
@@ -253,14 +176,9 @@ export function createOpentelemetryDevframe(options: OpentelemetryDevframeOption
     capabilities: { build: false },
     async setup(ctx) {
       const scoped = ctx.scope(OPENTELEMETRY_DEVFRAME_NAMESPACE)
-      scoped.rpc.register(getTraces)
-      scoped.rpc.register(getTrace)
-      scoped.rpc.register(getSpans)
-      scoped.rpc.register(getLogs)
-      scoped.rpc.register(getMetrics)
-      scoped.rpc.register(clearTracesFn)
-      scoped.rpc.register(clearLogsFn)
-      scoped.rpc.register(clearMetricsFn)
+      for (const rpc of getRpcs(store)) {
+        scoped.rpc.register(rpc)
+      }
 
       const state = await scoped.rpc.sharedState('otel', {
         initialValue: { traces: [], spans: [], logs: [], metrics: [] } satisfies OpentelemetryDevframeState,

@@ -8,9 +8,9 @@ import { resolveGaugeScale } from '~/utils/gauge'
 import { breakdownKeys, breakdownSeries, latestSeries, sampleStats } from '~/utils/metrics'
 import type { MetricGroup } from '~/utils/metrics'
 import type { HistogramData, MetricType } from '~shared/types'
-import MetricLineChart from './MetricLineChart.vue'
 import MetricGauge from './MetricGauge.vue'
 import MetricHistogramChart from './MetricHistogramChart.vue'
+import MetricLineChart from './MetricLineChart.vue'
 
 const TYPE_COLORS: Record<MetricType, string> = {
   counter: 'green',
@@ -37,18 +37,15 @@ const latestHistogram = computed<HistogramData | null>(() => {
 })
 
 /** Gauges show one real series; the selector makes the choice explicit. */
-const gaugeSeriesOptions = computed(() =>
-  group?.type === 'gauge' ? latestSeries(group.dataPoints) : []
-)
+const gaugeSeriesOptions = computed(() => group?.type === 'gauge' ? latestSeries(group.dataPoints) : [])
 const gaugeSeriesKey = ref('')
 const selectedGauge = computed(
-  () => gaugeSeriesOptions.value.find(series => series.key === gaugeSeriesKey.value)
-    ?? gaugeSeriesOptions.value[0]
-    ?? null,
+  () =>
+    gaugeSeriesOptions.value.find(series => series.key === gaugeSeriesKey.value)
+      ?? gaugeSeriesOptions.value[0]
+      ?? null,
 )
-const gaugeScale = computed(() =>
-  resolveGaugeScale(selectedGauge.value?.values ?? group?.sparklineValues ?? [])
-)
+const gaugeScale = computed(() => resolveGaugeScale(selectedGauge.value?.values ?? group?.sparklineValues ?? []))
 
 /**
  * The aggregate unless a breakdown is selected. For gauges the default history
