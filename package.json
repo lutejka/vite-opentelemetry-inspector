@@ -67,7 +67,7 @@
     "@vueuse/core": "^15.0.0",
     "colorjs.io": "^0.7.1",
     "devframe": "1.2.6",
-    "dprint": "^0.64.3",
+    "dprint": "^0.65.0",
     "eslint": "^10.14.0",
     "splitpanes": "^4.1.2",
     "tailwindcss": "^4.3.3",
