@@ -82,7 +82,7 @@
   },
   "peerDependencies": {
     "@devframes/agentic": "1.3.6",
-    "devframe": "1.3.2",
+    "devframe": "1.3.6",
     "vite": "*"
   },
   "peerDependenciesMeta": {
