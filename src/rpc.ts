@@ -1,6 +1,5 @@
 import { defineRpcFunction } from 'devframe'
-import type { defineRpcFunction as defineRpcFunctionType } from 'devframe'
-import { OtelStore } from './store'
+import { OtelStore } from './store.ts'
 
 export const getRpcs = (store: OtelStore) => {
   const getTraces = defineRpcFunction({
