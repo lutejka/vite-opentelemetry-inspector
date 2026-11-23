@@ -13,5 +13,6 @@
       "rebaseWhen": "auto",
       "automergeType": "pr"
     }
-  ]
+  ],
+  "minimumReleaseAge": "3 days"
 }
